@@ -1,5 +1,6 @@
 import json
 import subprocess
+import re
 
 import requests
 
@@ -13,6 +14,15 @@ def is_browser_running():
         return True
     return False
 
+def kill_browser():
+    output = subprocess.check_output(["netstat", "-anutp", "2>/dev/null"]).decode("utf-8")
+    if str(driver_port) in output and "chrome --remo" in output:
+        result = re.compile(r"\d+(?=/chrome --remo )").search(output)
+        if result is not None:
+            subprocess.run(["kill", result.group()])
+            return True
+    return False
+
 
 def start_browser():
     if not is_browser_running():
@@ -20,9 +30,10 @@ def start_browser():
         #     f"google-chrome --headless --window-size=1366,768 --incognito --remote-debugging-port={driver_port}",
         #     shell=True)
         subprocess.Popen(
-            f"google-chrome --incognito --remote-debugging-port={driver_port}",
+            f"google-chrome --remote-debugging-port={driver_port}",
             shell=True)
-        pass
+        return True
+    return False
 
 def get_data_from_mssno_api(mssno):
     try:
@@ -47,3 +58,7 @@ def open_tab(browser, main_window):
     browser.execute_script(f"window.open('');")
     b = browser.window_handles
     return b[-1]
+
+if __name__ == "__main__":
+    a = kill_browser()
+    pass

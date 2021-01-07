@@ -11,7 +11,7 @@ io_folder = 'io'
 folder_list = [screenshot_folder, attachments_folder, io_folder]
 login_details_file = io_folder + '/' + 'login_details.json'
 # full path of chromedriver folder
-WEBDRIVER_FOLDER_PATH = "/home/akshay/Downloads/chromedriver"
+WEBDRIVER_FOLDER_PATH = "references/chromedriver"
 
 # period in seconds to wait for loading websites
 WAIT_PERIOD = 120

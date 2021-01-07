@@ -19,6 +19,7 @@ invalid_login_xpath = '/html/body/form/div[3]/center/table/tbody/tr[4]/td/table/
 logout_btn_xpath = '/html/body/form/div[3]/center/table/tbody/tr[3]/td/div[1]/ul/li[6]/a'
 
 
+
 def pre_login(url, tab_id, driver):
     driver.switch_to.window(tab_id)
     driver.get(url)
