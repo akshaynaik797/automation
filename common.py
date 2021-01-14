@@ -1,5 +1,8 @@
+from urllib.parse import urlparse
+
 import requests
 import mysql.connector
+from datetime import datetime
 
 from settings import conn_data, logs_folder
 from time import sleep
@@ -8,12 +11,13 @@ import os
 from requests import get
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from make_log import log_exceptions
-from settings import WAIT_PERIOD, WEBDRIVER_FOLDER_PATH
+from settings import WAIT_PERIOD, WEBDRIVER_FOLDER_PATH, attachments_folder
 
 chrome_options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
@@ -31,7 +35,8 @@ class FillPortalData:
         if r1.status_code == 200:
             self.data = r1.json()
             fields = (
-            'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field', 'default_value', 'step')
+            'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
+            'default_value', 'step', 'seq')
             with mysql.connector.connect(**conn_data) as con:
                 cur = con.cursor()
                 query = "SELECT * FROM paths where insurer = %s order by seq"
@@ -54,16 +59,19 @@ class FillPortalData:
                                         temp1 = temp1[k.strip()]
                                     except TypeError:
                                         with open('logs/api_field_error.log', 'a') as fp:
-                                            print(self.mss_no, row['api_field'], sep=',', file=fp)
+                                            print(str(datetime.now()), self.mss_no, row['api_field'], sep=',', file=fp)
                                 temp_string = temp_string + ' ' + temp1
                             row['value'] = temp_string
                         elif ':' in row['api_field']:
                             for j in row['api_field'].split(':'):
                                 try:
-                                    temp = temp[j.strip()]
+                                    if j == '-1':
+                                        temp = temp[int(j.strip())]
+                                    else:
+                                        temp = temp[j.strip()]
                                 except TypeError:
                                     with open('logs/api_field_error.log', 'a') as fp:
-                                        print(self.mss_no, row['api_field'], sep=',', file=fp)
+                                        print(str(datetime.now()), self.mss_no, row['api_field'], sep=',', file=fp)
                                     temp = ''
                             row['value'] = temp.strip()
                     records.append(row)
@@ -78,8 +86,15 @@ class FillPortalData:
         return ''
 
     def execute(self):
-        records = self.data['db_data']
-        for i in records:
+        db_records = self.data['db_data']
+        login_records, records = [], []
+        status = portal.data['0']['Currentstatus']
+        for i in db_records:
+            if i['process'] == 'login':
+                login_records.append(i)
+            if i['process'] == status:
+                records.append(i)
+        for i in login_records:
             value = i['value']
             if i['field'] == 'portal_link':
                 visit_portal(value)
@@ -89,6 +104,32 @@ class FillPortalData:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 press_button(path_type, path_value)
+        for i in records:
+            try:
+                value = i['value']
+                if i['field'] == 'portal_link':
+                    visit_portal(value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'I':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    fill_input(value, path_type, path_value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'B':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    press_button(path_type, path_value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'F':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    upload_file(value, path_type, path_value)
+                    print(i['step'], i['value'])
+                    z = 1
+                if i['is_input'] == 'LIST':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    select_option(value, path_type, path_value)
+                    print(i['step'], i['value'])
+                    z = 1
+            except:
+                z = 1
 
 
 
@@ -143,9 +184,33 @@ def press_button(path_type, path):
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
 
+def upload_file(data, path_type, path):
+    file_path = download_file(data)
+    WebDriverWait(driver, wait) \
+        .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(file_path)
+
+def select_option(data, path_type, path):
+    select = Select(WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, path))))
+    select.select_by_visible_text(data)
+    pass
+
+
+def download_file(url):
+    # open in binary mode
+    a = urlparse(url)
+    # print(a.path)
+    # print(os.path.basename(a.path))
+    if not os.path.exists(attachments_folder):
+        os.mkdir(attachments_folder)
+    with open(attachments_folder + '/' + os.path.basename(a.path), "wb") as file:
+        # get request
+        response = requests.get(url)
+        # write to file
+        file.write(response.content)
+        return os.path.abspath(attachments_folder + '/' + os.path.basename(a.path))
 if __name__ == '__main__':
     portal = FillPortalData('MSS-1003113')
-    for i in portal.data['db_data']:
-        print(i['value'])
+    # for i in portal.data['db_data']:
+    #     print(i['value'])
     portal.execute()
     pass
