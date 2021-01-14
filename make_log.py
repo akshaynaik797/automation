@@ -25,6 +25,7 @@ def log_exceptions(**kwargs):
 
 def log_data(**kwargs):
     from datetime import datetime as akdatetime
+
     directory = 'logs/'
     if not os.path.exists(directory):
         os.makedirs(directory)
