@@ -1,3 +1,4 @@
+from copy import deepcopy
 from urllib.parse import urlparse
 
 import requests
@@ -326,14 +327,39 @@ def grouping_ins_hosp():
         for record in data:
             if record['HospitalID'] == i and record['insurerID'] == j:
                 data_dict[i + ',' + j].append(record)
-    return data_dict
+    fields = ('sno', 'insid', 'type', 'status', 'flag')
+    with mysql.connector.connect(**conn_data) as con:
+        cur = con.cursor()
+        query = "SELECT * FROM auto_filing_process where flag = '1'"
+        cur.execute(query)
+        result = cur.fetchall()
+        records = []
+        for i in result:
+            row = dict()
+            for j, k in zip(fields, i):
+                row[j] = k
+            records.append(row)
+        processed = deepcopy(data_dict)
+        processed1 = dict()
+        for i in records:
+            for j in data_dict:
+                if ',' + i['insid'] not in j:
+                    processed.pop(j, None)
+            for j in processed:
+                processed1[j] = []
+                for k in processed[j]:
+                    if k['Type'] == i['type'] and k['status'] == i['status']:
+                        processed1[j].append(k)
+                        pass
+    return processed1
 
 
 def update_hospitaltlog(**kwargs):
     fields = 'fStatus', 'fLock', 'Type_Ref'
     url = update_hospitaltlog_api
-    x = requests.post(url, data=kwargs)
-
+    #####for test purpose
+    # x = requests.post(url, data=kwargs)
+    #####
 
 def download_file(url):
     # open in binary mode
@@ -361,16 +387,16 @@ if __name__ == '__main__':
                 print(str(a), file=fp)
             for i in a:
                 ########for test purpose
-                if i != '8,16':
-                    continue
+                # if i != '8,16':
+                #     continue
                 ########
                 portal = FillPortalData(a[i][0]['Type_Ref'])
                 portal.login()
                 for j in a[i]:
                     try:
                         ########for test purpose
-                        # if j['Type_Ref'] != 'MSS-1005451':
-                        #     continue
+                        if j['Type_Ref'] != 'MSS-1005451':
+                            continue
                         ########
                         update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=1)
                         portal1 = FillPortalData(j['Type_Ref'])
