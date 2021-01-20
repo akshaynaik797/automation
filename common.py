@@ -4,7 +4,7 @@ import requests
 import mysql.connector
 from datetime import datetime
 
-from settings import conn_data, logs_folder
+from settings import conn_data, logs_folder, mss_no_data_api, grouping_data_api, update_hospitaltlog_api
 from time import sleep
 import os
 
@@ -17,26 +17,30 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from make_log import log_exceptions
-from settings import WAIT_PERIOD, WEBDRIVER_FOLDER_PATH, attachments_folder
+from settings import WAIT_PERIOD, WEBDRIVER_FOLDER_PATH, attachments_folder, chrome_options
 
-chrome_options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
 wait = int(WAIT_PERIOD)
 
 if not os.path.exists(logs_folder):
     os.mkdir(logs_folder)
 
+
 class FillPortalData:
 
     def __init__(self, mss_no):
         self.mss_no = mss_no
         self.data = dict()
-        r1 = requests.post("https://vnusoftware.com/iclaimtestmax/api/preauth", data={"pid": self.mss_no})
+        self.login_records = []
+        self.records = []
+        self.logout_records = []
+
+        r1 = requests.post(mss_no_data_api, data={"pid": self.mss_no})
         if r1.status_code == 200:
             self.data = r1.json()
             fields = (
-            'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
-            'default_value', 'step', 'seq')
+                'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
+                'default_value', 'step', 'seq')
             with mysql.connector.connect(**conn_data) as con:
                 cur = con.cursor()
                 query = "SELECT * FROM paths where insurer = %s order by seq"
@@ -76,6 +80,14 @@ class FillPortalData:
                             row['value'] = temp.strip()
                     records.append(row)
             self.data['db_data'] = records
+            self.status = self.data['0']['Currentstatus']
+            for i in self.data['db_data']:
+                if i['process'] == 'login':
+                    self.login_records.append(i)
+                if i['process'] == 'logout':
+                    self.logout_records.append(i)
+                if i['process'] == self.status:
+                    self.records.append(i)
 
     def get_api_field(self, api_field):
         if api_field != '':
@@ -85,60 +97,158 @@ class FillPortalData:
             return temp
         return ''
 
-    def execute(self):
-        db_records = self.data['db_data']
-        login_records, records = [], []
-        status = portal.data['0']['Currentstatus']
-        for i in db_records:
-            if i['process'] == 'login':
-                login_records.append(i)
-            if i['process'] == status:
-                records.append(i)
-        for i in login_records:
+    def login(self):
+        for i in self.login_records:
             value = i['value']
+            message = i['field']
+            step = i['step']
             if i['field'] == 'portal_link':
-                visit_portal(value)
+                try:
+                    visit_portal(value)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                           status, message, '')
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
-                fill_input(value, path_type, path_value)
+                step = 'fill_input'
+                try:
+                    fill_input(value, path_type, path_value)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                           status, message, '')
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
-                press_button(path_type, path_value)
-        for i in records:
+                step = 'press_button'
+                try:
+                    press_button(path_type, path_value)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                           status, message, '')
+
+    def logout(self):
+        for i in self.logout_records:
+            value = i['value']
+            message = i['field']
+            step = i['step']
+            if i['field'] == 'portal_link':
+                try:
+                    visit_portal(value)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                           status, message, '')
+            if i['is_input'] == 'I':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    fill_input(value, path_type, path_value)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                           status, message, '')
+            if i['is_input'] == 'B':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    press_button(path_type, path_value)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                           status, message, '')
+
+    def execute(self):
+        for i in self.records:
             try:
                 value = i['value']
+                message = i['field']
+                step = i['step']
                 if i['field'] == 'portal_link':
-                    visit_portal(value)
+                    try:
+                        visit_portal(value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, '')
                     print(i['step'], i['value'])
                 if i['is_input'] == 'I':
                     path_type, path_value = i['path_type'], i['path_value']
-                    fill_input(value, path_type, path_value)
+                    try:
+                        fill_input(value, path_type, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, '')
                     print(i['step'], i['value'])
                 if i['is_input'] == 'B':
                     path_type, path_value = i['path_type'], i['path_value']
-                    press_button(path_type, path_value)
+                    try:
+                        press_button(path_type, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, '')
                     print(i['step'], i['value'])
                 if i['is_input'] == 'F':
                     path_type, path_value = i['path_type'], i['path_value']
-                    upload_file(value, path_type, path_value)
+                    try:
+                        upload_file(value, path_type, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, '')
                     print(i['step'], i['value'])
                     z = 1
                 if i['is_input'] == 'LIST':
                     path_type, path_value = i['path_type'], i['path_value']
-                    select_option(value, path_type, path_value)
+                    try:
+                        select_option(value, path_type, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, '')
                     print(i['step'], i['value'])
-                    z = 1
             except:
                 z = 1
 
 
+def insert_log(tab_id, transactionid, referenceno, insurer, process, step, status, message, url):
+    try:
+        data = (tab_id, transactionid, referenceno, insurer, process, step, status, message, url)
+        with mysql.connector.connect(**conn_data) as con:
+            cur = con.cursor()
+            query = "insert into logs (tab_id, transactionid, referenceno, " \
+                    "insurer, process, step, status, message, url) " \
+                    "values (%s, %s, %s, %s, %s, %s, %s, %s, %s);"
+            cur.execute(query, data)
+            con.commit()
+            return True
+    except:
+        log_exceptions()
+        return False
+
 
 def check_portal(link):
-    response = requests.get(link)
-    status = response.status_code
-    if status == 200:
-        return True
-    return False
+    try:
+        response = requests.get(link)
+        status = response.status_code
+        if status == 200:
+            return True
+        return False
+    except:
+        return False
+
 
 def get_data_from_mssno_api(mssno):
     try:
@@ -152,12 +262,14 @@ def get_data_from_mssno_api(mssno):
     except requests.exceptions.ConnectionError:
         return {'error': 'mssno api server down'}
 
+
 def get_data_from_db(insurer_id):
-    fields = ('insurer','process','field','is_input','path_type','path_value','api_field','default_value','step')
+    fields = (
+        'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field', 'default_value', 'step')
     with mysql.connector.connect(**conn_data) as con:
         cur = con.cursor()
         query = "SELECT * FROM paths where insurer = %s"
-        cur.execute(query, (insurer_id, ))
+        cur.execute(query, (insurer_id,))
         result = cur.fetchall()
         records = []
         for i in result:
@@ -167,11 +279,13 @@ def get_data_from_db(insurer_id):
             records.append(row)
     return records
 
+
 def visit_portal(link):
     if check_portal(link):
         driver.get(link)
         return True
     return False
+
 
 def fill_input(data, path_type, path):
     if path_type == 'xpath':
@@ -179,20 +293,46 @@ def fill_input(data, path_type, path):
             .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(data)
     pass
 
+
 def press_button(path_type, path):
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
+
 
 def upload_file(data, path_type, path):
     file_path = download_file(data)
     WebDriverWait(driver, wait) \
         .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(file_path)
 
+
 def select_option(data, path_type, path):
     select = Select(WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, path))))
     select.select_by_visible_text(data)
     pass
+
+
+def grouping_ins_hosp():
+    url = grouping_data_api
+    myobj = {}
+    x = requests.post(url, data=myobj)
+    data = x.json()
+    data_dict = dict()
+    data_set = set()
+    for i in data:
+        data_set.add((i['HospitalID'], i['insurerID']))
+    for i, j in data_set:
+        data_dict[i + ',' + j] = []
+        for record in data:
+            if record['HospitalID'] == i and record['insurerID'] == j:
+                data_dict[i + ',' + j].append(record)
+    return data_dict
+
+
+def update_hospitaltlog(**kwargs):
+    fields = 'fStatus', 'fLock', 'Type_Ref'
+    url = update_hospitaltlog_api
+    x = requests.post(url, data=kwargs)
 
 
 def download_file(url):
@@ -208,9 +348,38 @@ def download_file(url):
         # write to file
         file.write(response.content)
         return os.path.abspath(attachments_folder + '/' + os.path.basename(a.path))
+
+
 if __name__ == '__main__':
-    portal = FillPortalData('MSS-1003113')
-    # for i in portal.data['db_data']:
-    #     print(i['value'])
-    portal.execute()
-    pass
+    while 1:
+        try:
+            a = grouping_ins_hosp()
+            with open('logs/group_data.log', 'a') as fp:
+                print('=' * 100, file=fp)
+                print(str(datetime.now()), file=fp)
+                print('-' * 100, file=fp)
+                print(str(a), file=fp)
+            for i in a:
+                ########for test purpose
+                if i != '8,16':
+                    continue
+                ########
+                portal = FillPortalData(a[i][0]['Type_Ref'])
+                portal.login()
+                for j in a[i]:
+                    try:
+                        ########for test purpose
+                        # if j['Type_Ref'] != 'MSS-1005451':
+                        #     continue
+                        ########
+                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=1)
+                        portal1 = FillPortalData(j['Type_Ref'])
+                        portal1.execute()
+                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0, fStatus='X')
+                    except:
+                        log_exceptions()
+                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0, fStatus='E')
+                portal.logout()
+        except:
+            log_exceptions()
+        sleep(300)
