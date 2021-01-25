@@ -7,6 +7,7 @@ screenshot_folder = 'screenshots'
 attachments_folder = 'attachments'
 logs_folder = 'logs'
 
+screenshot_url = "http://3.7.8.68:9982/screenshot/"
 grouping_data_api = 'http://3.7.8.68:9980/get_hospitaltlog'
 update_hospitaltlog_api = 'http://3.7.8.68:9980/update_hospitaltlog'
 mss_no_data_api = "https://vnusoftware.com/iclaimmax/api/preauth"
@@ -15,6 +16,13 @@ conn_data = {'host': "iclaimdev.caq5osti8c47.ap-south-1.rds.amazonaws.com",
              'user': "admin",
              'password': "Welcome1!",
              'database': 'portals'}
+
+#####for test purpose
+conn_data = {'host': "iclaimdev.caq5osti8c47.ap-south-1.rds.amazonaws.com",
+             'user': "admin",
+             'password': "Welcome1!",
+             'database': 'portals_rep'}
+######
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option('prefs', {

@@ -1,3 +1,4 @@
+import random
 from copy import deepcopy
 from urllib.parse import urlparse
 
@@ -5,7 +6,8 @@ import requests
 import mysql.connector
 from datetime import datetime
 
-from settings import conn_data, logs_folder, mss_no_data_api, grouping_data_api, update_hospitaltlog_api
+from settings import conn_data, logs_folder, mss_no_data_api, grouping_data_api, \
+    update_hospitaltlog_api, screenshot_folder, screenshot_url
 from time import sleep
 import os
 
@@ -25,6 +27,8 @@ wait = int(WAIT_PERIOD)
 
 if not os.path.exists(logs_folder):
     os.mkdir(logs_folder)
+if not os.path.exists(screenshot_folder):
+    os.mkdir(screenshot_folder)
 
 
 class FillPortalData:
@@ -35,13 +39,14 @@ class FillPortalData:
         self.login_records = []
         self.records = []
         self.logout_records = []
+        self.home_records = []
 
         r1 = requests.post(mss_no_data_api, data={"pid": self.mss_no})
         if r1.status_code == 200:
             self.data = r1.json()
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
-                'default_value', 'step', 'seq')
+                'default_value', 'step', 'seq', 'relation')
             with mysql.connector.connect(**conn_data) as con:
                 cur = con.cursor()
                 query = "SELECT * FROM paths where insurer = %s order by seq"
@@ -78,15 +83,23 @@ class FillPortalData:
                                     with open('logs/api_field_error.log', 'a') as fp:
                                         print(str(datetime.now()), self.mss_no, row['api_field'], sep=',', file=fp)
                                     temp = ''
-                            row['value'] = temp.strip()
+                            if isinstance(temp, str):
+                                row['value'] = temp.strip()
+                            else:
+                                row['value'] = temp
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
+            #####for test purpose
+            self.status = 'PreAuth - Sent To TPA/ Insurer'
+            #####
             for i in self.data['db_data']:
                 if i['process'] == 'login':
                     self.login_records.append(i)
                 if i['process'] == 'logout':
                     self.logout_records.append(i)
+                if i['process'] == 'HOME':
+                    self.home_records.append(i)
                 if i['process'] == self.status:
                     self.records.append(i)
 
@@ -109,8 +122,11 @@ class FillPortalData:
                     status = 'pass'
                 except:
                     status = 'fail'
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                           status, message, '')
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                           status, message, screenshot_url + filename)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
                 step = 'fill_input'
@@ -119,18 +135,24 @@ class FillPortalData:
                     status = 'pass'
                 except:
                     status = 'fail'
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                           status, message, '')
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                           status, message, screenshot_url + filename)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 step = 'press_button'
                 try:
-                    press_button(path_type, path_value)
+                    press_button(path_type, path_value, i)
                     status = 'pass'
                 except:
                     status = 'fail'
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                           status, message, '')
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                           status, message, screenshot_url + filename)
 
     def logout(self):
         for i in self.logout_records:
@@ -143,8 +165,11 @@ class FillPortalData:
                     status = 'pass'
                 except:
                     status = 'fail'
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
                 insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                           status, message, '')
+                           status, message, screenshot_url + filename)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -152,17 +177,41 @@ class FillPortalData:
                     status = 'pass'
                 except:
                     status = 'fail'
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
                 insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                           status, message, '')
+                           status, message, screenshot_url + filename)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value)
+                    press_button(path_type, path_value, i)
                     status = 'pass'
                 except:
                     status = 'fail'
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
                 insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                           status, message, '')
+                           status, message, screenshot_url + filename)
+
+    def home(self):
+        for i in self.home_records:
+            value = i['value']
+            message = i['field']
+            step = i['step']
+            if i['is_input'] == 'B':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    press_button(path_type, path_value, i)
+                    status = 'pass'
+                except:
+                    status = 'fail'
+                filename = f"{random.randint(99999, 999999)}.png"
+                sleep(1)
+                driver.save_screenshot(screenshot_folder + '/' + filename)
+                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "home", step,
+                           status, message, screenshot_url + filename)
 
     def execute(self):
         for i in self.records:
@@ -176,8 +225,11 @@ class FillPortalData:
                         status = 'pass'
                     except:
                         status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
                     insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, '')
+                               status, message, screenshot_url + filename)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'I':
                     path_type, path_value = i['path_type'], i['path_value']
@@ -186,18 +238,50 @@ class FillPortalData:
                         status = 'pass'
                     except:
                         status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
                     insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, '')
+                               status, message, screenshot_url + filename)
                     print(i['step'], i['value'])
-                if i['is_input'] == 'B':
+                if i['is_input'] == 'B' or i['is_input'] == 'LINK':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        press_button(path_type, path_value)
+                        press_button(path_type, path_value, i)
                         status = 'pass'
                     except:
                         status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
                     insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, '')
+                               status, message, screenshot_url + filename)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'S':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        search_and_click(path_type, path_value, i)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'RB':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        press_radio_button(path_type, path_value, i)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'F':
                     path_type, path_value = i['path_type'], i['path_value']
@@ -206,8 +290,11 @@ class FillPortalData:
                         status = 'pass'
                     except:
                         status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
                     insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, '')
+                               status, message, screenshot_url + filename)
                     print(i['step'], i['value'])
                     z = 1
                 if i['is_input'] == 'LIST':
@@ -217,9 +304,13 @@ class FillPortalData:
                         status = 'pass'
                     except:
                         status = 'fail'
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
                     insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, '')
+                               status, message, screenshot_url + filename)
                     print(i['step'], i['value'])
+
             except:
                 z = 1
 
@@ -290,21 +381,54 @@ def visit_portal(link):
 
 def fill_input(data, path_type, path):
     if path_type == 'xpath':
-        WebDriverWait(driver, wait) \
-            .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(data)
-    pass
+        for i in range(2):
+            element = WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, path)))
+            element.send_keys(data)
+            value = element.get_attribute("value")
+            if value == data:
+                break
+        pass
 
 
-def press_button(path_type, path):
+def search_and_click(path_type, path, path_row):
+    value = path_row['value']
+    if value == '':
+        value = path_row['default_value']
+    if path_type == 'xpath':
+        elements = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_all_elements_located((By.XPATH, path)))
+        for i, j in enumerate(elements):
+            if value in j.text:
+                j.click()
+
+
+def press_radio_button(path_type, path, path_row):
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
 
 
+def press_button(path_type, path, path_row):
+    seq, result = int(path_row['seq']) + 1, None
+    if path_type == 'xpath':
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, path))).click()
+        with mysql.connector.connect(**conn_data) as con:
+            cur = con.cursor()
+            query = "select path_value from paths where insurer=%s and process=%s and seq=%s limit 1;"
+            cur.execute(query, (path_row['insurer'], path_row['process'], seq))
+            result = cur.fetchone()
+        if result is not None:
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, result[0])))
+
+
 def upload_file(data, path_type, path):
-    file_path = download_file(data)
-    WebDriverWait(driver, wait) \
-        .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(file_path)
+    for j in [i['Doc'] for i in data]:
+        file_path = download_file(j)
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(file_path)
 
 
 def select_option(data, path_type, path):
@@ -315,6 +439,9 @@ def select_option(data, path_type, path):
 
 def grouping_ins_hosp():
     url = grouping_data_api
+    ######for test purpose
+    url = "http://localhost:9980/get_hospitaltlog"
+    ######
     myobj = {}
     x = requests.post(url, data=myobj)
     data = x.json()
@@ -330,7 +457,11 @@ def grouping_ins_hosp():
     fields = ('sno', 'insid', 'type', 'status', 'flag')
     with mysql.connector.connect(**conn_data) as con:
         cur = con.cursor()
-        query = "SELECT * FROM auto_filing_process where flag = '1'"
+        flag = '1'
+        #######for test purpose
+        flag = '0'
+        #######
+        query = f"SELECT * FROM auto_filing_process where flag = '{flag}'"
         cur.execute(query)
         result = cur.fetchall()
         records = []
@@ -339,15 +470,18 @@ def grouping_ins_hosp():
             for j, k in zip(fields, i):
                 row[j] = k
             records.append(row)
-        processed = deepcopy(data_dict)
+            processed = dict()
         processed1 = dict()
-        for i in records:
-            for j in data_dict:
-                if ',' + i['insid'] not in j:
-                    processed.pop(j, None)
-            for j in processed:
-                processed1[j] = []
-                for k in processed[j]:
+
+        for j in data_dict:
+            for i in records:
+                if ',' + i['insid'] in j:
+                    processed[j] = data_dict[j]
+        for j in processed:
+            processed1[j] = []
+        for j in processed:
+            for k in processed[j]:
+                for i in records:
                     if k['Type'] == i['type'] and k['status'] == i['status']:
                         processed1[j].append(k)
                         pass
@@ -357,9 +491,11 @@ def grouping_ins_hosp():
 def update_hospitaltlog(**kwargs):
     fields = 'fStatus', 'fLock', 'Type_Ref'
     url = update_hospitaltlog_api
-    #####for test purpose
+    #########for test purpose
     # x = requests.post(url, data=kwargs)
-    #####
+    # return x.text
+    ########
+
 
 def download_file(url):
     # open in binary mode
@@ -386,26 +522,27 @@ if __name__ == '__main__':
                 print('-' * 100, file=fp)
                 print(str(a), file=fp)
             for i in a:
-                ########for test purpose
-                # if i != '8,16':
-                #     continue
-                ########
-                portal = FillPortalData(a[i][0]['Type_Ref'])
-                portal.login()
+                # portal = FillPortalData(a[i][0]['Type_Ref'])
+                # portal.login()
                 for j in a[i]:
                     try:
-                        ########for test purpose
-                        if j['Type_Ref'] != 'MSS-1005451':
-                            continue
-                        ########
-                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=1)
+                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=1,
+                                            Type=j['Type'], status=j['status'])
                         portal1 = FillPortalData(j['Type_Ref'])
-                        portal1.execute()
-                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0, fStatus='X')
+                        if len(portal1.records) > 0:
+                            portal1.login()
+                            portal1.execute()
+                            portal1.home()
+                            update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0,
+                                                fStatus='X', Type=j['Type'], status=j['status'])
+                        else:
+                            update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0,
+                                                fStatus='S', Type=j['Type'], status=j['status'])
                     except:
                         log_exceptions()
-                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0, fStatus='E')
-                portal.logout()
+                        update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0, fStatus='E',
+                                            Type=j['Type'], status=j['status'])
         except:
             log_exceptions()
+            pass
         sleep(300)
