@@ -90,9 +90,6 @@ class FillPortalData:
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
-            #####for test purpose
-            self.status = 'PreAuth - Sent To TPA/ Insurer'
-            #####
             for i in self.data['db_data']:
                 if i['process'] == 'login':
                     self.login_records.append(i)
@@ -440,7 +437,7 @@ def select_option(data, path_type, path):
 def grouping_ins_hosp():
     url = grouping_data_api
     ######for test purpose
-    url = "http://localhost:9980/get_hospitaltlog"
+    # url = "http://localhost:9980/get_hospitaltlog"
     ######
     myobj = {}
     x = requests.post(url, data=myobj)
@@ -459,7 +456,7 @@ def grouping_ins_hosp():
         cur = con.cursor()
         flag = '1'
         #######for test purpose
-        flag = '0'
+        # flag = '0'
         #######
         query = f"SELECT * FROM auto_filing_process where flag = '{flag}'"
         cur.execute(query)
@@ -492,8 +489,8 @@ def update_hospitaltlog(**kwargs):
     fields = 'fStatus', 'fLock', 'Type_Ref'
     url = update_hospitaltlog_api
     #########for test purpose
-    # x = requests.post(url, data=kwargs)
-    # return x.text
+    x = requests.post(url, data=kwargs)
+    return x.text
     ########
 
 
@@ -522,15 +519,16 @@ if __name__ == '__main__':
                 print('-' * 100, file=fp)
                 print(str(a), file=fp)
             for i in a:
-                # portal = FillPortalData(a[i][0]['Type_Ref'])
-                # portal.login()
+                if len(a[i]) == 0:
+                    continue
+                portal = FillPortalData(a[i][0]['Type_Ref'])
+                portal.login()
                 for j in a[i]:
                     try:
                         update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=1,
                                             Type=j['Type'], status=j['status'])
                         portal1 = FillPortalData(j['Type_Ref'])
                         if len(portal1.records) > 0:
-                            portal1.login()
                             portal1.execute()
                             portal1.home()
                             update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0,
@@ -542,6 +540,7 @@ if __name__ == '__main__':
                         log_exceptions()
                         update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0, fStatus='E',
                                             Type=j['Type'], status=j['status'])
+                portal.logout()
         except:
             log_exceptions()
             pass
