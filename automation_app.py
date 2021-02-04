@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_cors import CORS
 import mysql.connector
 
+from common import FillPortal
+from make_log import custom_log_data
 from settings import screenshot_folder, conn_data
 
 app = Flask(__name__)
@@ -13,6 +15,22 @@ app.config['referrer_url'] = None
 @app.route("/")
 def index():
     return url_for('index', _external=True)
+
+@app.route('/run', methods=["GET"])
+def run():
+    data = request.args.to_dict()
+    if 'mss_no' not in data and 'hosp_id' not in data:
+        return jsonify("pass mss_no and hosp_id")
+    else:
+        portal = FillPortal(data['mss_no'], data['hosp_id'])
+        z = portal.visit_portal()
+        if z is None or z == 'data:,':
+            custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
+        else:
+            portal.login()
+            portal.home()
+            portal.execute()
+    return data
 
 @app.route('/get_log', methods=["POST"])
 def get_log():

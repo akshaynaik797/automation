@@ -24,6 +24,7 @@ from make_log import log_exceptions
 from settings import WAIT_PERIOD, WEBDRIVER_FOLDER_PATH, attachments_folder, chrome_options
 wait = WAIT_PERIOD
 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
+a = driver.current_url
 driver.get('https://www.icicilombard.com/IL-HEALTH-CARE/Home/Login')
 WebDriverWait(driver, wait) \
                 .until(EC.visibility_of_element_located((By.XPATH, "//input[@id='username']"))).send_keys('ilhc2444')
@@ -47,4 +48,5 @@ elements = WebDriverWait(driver, wait) \
 for i, j in enumerate(elements):
     if 'ACTIVE' in j.text:
         j.click()
+
 pass
