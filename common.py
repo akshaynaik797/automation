@@ -33,7 +33,7 @@ if not os.path.exists(screenshot_folder):
 
 class FillPortalData:
 
-    def __init__(self, mss_no):
+    def __init__(self, mss_no, transaction_id):
         self.mss_no = mss_no
         self.data = dict()
         self.login_records = []
@@ -41,6 +41,7 @@ class FillPortalData:
         self.logout_records = []
         self.home_records = []
         self.anti_flag = 'P'
+        self.transaction_id = transaction_id
 
         r1 = requests.post(mss_no_data_api, data={"pid": self.mss_no})
         if r1.status_code == 200:
@@ -131,7 +132,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "visit_portal", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "visit_portal", step,
                            status, message, screenshot_url + filename, value)
                 return driver.current_url
         return None
@@ -154,7 +155,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
                            status, message, screenshot_url + filename, value)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -167,7 +168,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
                            status, message, screenshot_url + filename, value)
 
     def logout(self):
@@ -187,7 +188,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "logout", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -200,7 +201,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "logout", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -213,7 +214,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "logout", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
 
     def home(self):
@@ -234,7 +235,7 @@ class FillPortalData:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "home", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "home", step,
                            status, message, screenshot_url + filename, value)
 
     def execute(self):
@@ -257,7 +258,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'I':
@@ -271,7 +272,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'B' or i['is_input'] == 'LINK':
@@ -285,7 +286,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'S':
@@ -299,7 +300,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'RB':
@@ -313,7 +314,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'F':
@@ -327,7 +328,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                     z = 1
@@ -342,7 +343,7 @@ class FillPortalData:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
 
@@ -350,7 +351,7 @@ class FillPortalData:
                 z = 1
 
 class FillPortal:
-    def __init__(self, mss_no, hosp_id):
+    def __init__(self, mss_no, hosp_id, transaction_id):
         self.mss_no = mss_no
         self.hosp_id = hosp_id
         self.data = dict()
@@ -359,6 +360,7 @@ class FillPortal:
         self.logout_records = []
         self.home_records = []
         self.anti_flag = 'H'
+        self.transaction_id = transaction_id
         with mysql.connector.connect(**conn_data) as con:
             cur = con.cursor()
             query = "SELECT apiLink FROM apisConfig where hospitalID=%s and processName='portal_automation' limit 1;"
@@ -454,7 +456,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "visit_portal", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "visit_portal", step,
                            status, message, screenshot_url + filename, value)
                 return driver.current_url
         return None
@@ -477,7 +479,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
                            status, message, screenshot_url + filename, value)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -490,7 +492,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "login", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
                            status, message, screenshot_url + filename, value)
 
     def logout(self):
@@ -510,7 +512,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "logout", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -523,7 +525,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "logout", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -536,7 +538,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "logout", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
 
     def home(self):
@@ -557,7 +559,7 @@ class FillPortal:
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', '', self.mss_no, self.data['0']['InsurerID'], "home", step,
+                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "home", step,
                            status, message, screenshot_url + filename, value)
 
     def execute(self):
@@ -580,7 +582,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'I':
@@ -594,7 +596,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'B' or i['is_input'] == 'LINK':
@@ -608,7 +610,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'S':
@@ -622,7 +624,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'RB':
@@ -636,7 +638,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                 if i['is_input'] == 'F':
@@ -650,7 +652,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
                     z = 1
@@ -665,7 +667,7 @@ class FillPortal:
                     filename = f"{random.randint(99999, 999999)}.png"
                     sleep(1)
                     driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', '', self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
 
@@ -885,7 +887,7 @@ if __name__ == '__main__':
                 # if zz in i:
                 #     continue
                 ####
-                portal = FillPortalData(a[i][0]['Type_Ref'])
+                portal = FillPortalData(a[i][0]['Type_Ref'], a[i][0]['transactionID'])
                 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
                 z = portal.visit_portal()
                 if z is None or z == 'data:,':
@@ -897,7 +899,7 @@ if __name__ == '__main__':
                     try:
                         update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=1,
                                             Type=j['Type'], status=j['status'])
-                        portal1 = FillPortalData(j['Type_Ref'])
+                        portal1 = FillPortalData(j['Type_Ref'], j['transactionID'])
                         if len(portal1.records) > 0:
                             portal1.execute()
                             update_hospitaltlog(Type_Ref=j['Type_Ref'], fLock=0,
