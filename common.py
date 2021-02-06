@@ -351,7 +351,7 @@ class FillPortalData:
                 z = 1
 
 class FillPortal:
-    def __init__(self, mss_no, hosp_id, transaction_id):
+    def __init__(self, mss_no, hosp_id):
         self.mss_no = mss_no
         self.hosp_id = hosp_id
         self.data = dict()
@@ -359,8 +359,8 @@ class FillPortal:
         self.records = []
         self.logout_records = []
         self.home_records = []
-        self.anti_flag = 'H'
-        self.transaction_id = transaction_id
+        self.anti_flag = 'H' #H -> ubuntu machine,  P -> package machine, A - > ALL
+        self.transaction_id = ""
         with mysql.connector.connect(**conn_data) as con:
             cur = con.cursor()
             query = "SELECT apiLink FROM apisConfig where hospitalID=%s and processName='portal_automation' limit 1;"
@@ -847,8 +847,8 @@ def update_hospitaltlog(**kwargs):
     fields = 'fStatus', 'fLock', 'Type_Ref'
     url = update_hospitaltlog_api
     #########for test purpose
-    # x = requests.post(url, data=kwargs)
-    # return x.text
+    x = requests.post(url, data=kwargs)
+    return x.text
     ########
 
 

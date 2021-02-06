@@ -2,9 +2,11 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_cors import CORS
 import mysql.connector
 
+from selenium import webdriver
+
 from common import FillPortal
 from make_log import custom_log_data
-from settings import screenshot_folder, conn_data
+from settings import screenshot_folder, conn_data, WEBDRIVER_FOLDER_PATH, chrome_options
 
 app = Flask(__name__)
 
@@ -22,6 +24,7 @@ def run():
     if 'mss_no' not in data and 'hosp_id' not in data:
         return jsonify("pass mss_no and hosp_id")
     else:
+        driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
         portal = FillPortal(data['mss_no'], data['hosp_id'])
         z = portal.visit_portal()
         if z is None or z == 'data:,':
@@ -30,6 +33,7 @@ def run():
             portal.login()
             portal.home()
             portal.execute()
+    driver.quit()
     return data
 
 @app.route('/get_log', methods=["POST"])
