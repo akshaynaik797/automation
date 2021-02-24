@@ -1,3 +1,6 @@
+import os
+from distutils.dir_util import remove_tree
+
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_cors import CORS
 import mysql.connector
@@ -6,7 +9,7 @@ from selenium import webdriver
 
 from common import FillPortal
 from make_log import custom_log_data
-from settings import screenshot_folder, conn_data, WEBDRIVER_FOLDER_PATH, chrome_options
+from settings import screenshot_folder, conn_data, WEBDRIVER_FOLDER_PATH, chrome_options, root_folder
 
 app = Flask(__name__)
 
@@ -65,6 +68,8 @@ def run():
             portal.home()
             portal.execute()
     driver.quit()
+    if os.path.exists(root_folder):
+        remove_tree(root_folder)
     return data
 
 @app.route('/get_log', methods=["POST"])

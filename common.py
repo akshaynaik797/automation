@@ -3,6 +3,7 @@ from copy import deepcopy
 from distutils.dir_util import remove_tree
 from pathlib import Path
 from urllib.parse import urlparse
+import re
 
 import requests
 import mysql.connector
@@ -111,7 +112,7 @@ class FillPortalData:
                         self.logout_records.append(i)
                     if i['process'] == 'HOME':
                         self.home_records.append(i)
-                    if i['process'] == self.status:
+                    if i['process'] in self.status:
                         self.records.append(i)
 
     def get_api_field(self, api_field):
@@ -152,6 +153,7 @@ class FillPortalData:
             value = i['value']
             message = i['field']
             step = i['step']
+            default_value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
             if i['is_input'] == 'I' and 'link' not in i['field']:
@@ -170,8 +172,11 @@ class FillPortalData:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value, i)
-                    status = 'pass'
+                    if path_value == default_value:
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
+                    else:
+                        status = 'value mismatch'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -186,6 +191,7 @@ class FillPortalData:
             value = i['value']
             message = i['field']
             step = i['step']
+            default_value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
             if i['field'] == 'portal_link':
@@ -216,8 +222,11 @@ class FillPortalData:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value, i)
-                    status = 'pass'
+                    if path_value == default_value:
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
+                    else:
+                        status = 'value mismatch'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -232,13 +241,17 @@ class FillPortalData:
             value = i['value']
             message = i['field']
             step = i['step']
+            default_value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value, i)
-                    status = 'pass'
+                    if path_value == default_value:
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
+                    else:
+                        status = 'value mismatch'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -254,6 +267,7 @@ class FillPortalData:
                 value = i['value']
                 message = i['field']
                 step = i['step']
+                default_value = i['default_value']
                 if self.anti_flag == i['flag']:
                     continue
                 if value == '' or value is None:
@@ -287,9 +301,24 @@ class FillPortalData:
                     print(i['step'], i['value'])
                 if i['is_input'] == 'B' or i['is_input'] == 'LINK':
                     path_type, path_value = i['path_type'], i['path_value']
+                    if '{' in path_value:
+                        tmp = re.compile(r"(?<={).*(?=})").search(path_value)
+                        if tmp is not None:
+                            tmp = tmp.group().strip()
+                            temp = self.data
+                            for j in tmp.split(':'):
+                                try:
+                                    temp = temp[j.strip()]
+                                except:
+                                    pass
+                            if isinstance(temp, str):
+                                path_value = re.sub(r"(?<={).*(?=})", temp, path_value)
                     try:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
+                        if path_value == default_value:
+                            press_button(path_type, path_value, i)
+                            status = 'pass'
+                        else:
+                            status = 'value mismatch'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -316,8 +345,11 @@ class FillPortalData:
                 if i['is_input'] == 'RB':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        press_radio_button(path_type, path_value, i)
-                        status = 'pass'
+                        if path_value == default_value:
+                            press_radio_button(path_type, path_value, i)
+                            status = 'pass'
+                        else:
+                            status = 'value mismatch'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -371,6 +403,11 @@ class FillPortal:
         self.home_records = []
         self.anti_flag = 'H' #H -> ubuntu machine,  P -> package machine, A - > ALL
         self.transaction_id = ""
+
+        if os.path.exists(root_folder):
+            remove_tree(root_folder)
+        tmp = os.path.join(root_folder, self.mss_no)
+        Path(tmp).mkdir(parents=True, exist_ok=True)
         with mysql.connector.connect(**conn_data) as con:
             cur = con.cursor()
             query = "SELECT apiLink FROM apisConfig where hospitalID=%s and processName='portal_automation' limit 1;"
@@ -381,6 +418,10 @@ class FillPortal:
         r1 = requests.post(mss_no_data_api, data={"pid": self.mss_no})
         if r1.status_code == 200:
             self.data = r1.json()
+            pname, insid = self.data['0']['PatientName'], self.data['0']['InsurerID']
+            r2 = requests.post(setportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
+            for i in self.data['0']['Lastdoc']:
+                download_file1(i['Doc'], self.mss_no)
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
                 'default_value', 'step', 'seq', 'relation', 'flag')
@@ -435,7 +476,7 @@ class FillPortal:
                     self.logout_records.append(i)
                 if i['process'] == 'HOME':
                     self.home_records.append(i)
-                if i['process'] == self.status:
+                if i['process'] in self.status:
                     self.records.append(i)
 
     def get_api_field(self, api_field):
@@ -476,6 +517,7 @@ class FillPortal:
             value = i['value']
             message = i['field']
             step = i['step']
+            default_value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
             if i['is_input'] == 'I' and 'link' not in i['field']:
@@ -494,8 +536,11 @@ class FillPortal:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value, i)
-                    status = 'pass'
+                    if path_value == default_value:
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
+                    else:
+                        status = 'value mismatch'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -510,6 +555,7 @@ class FillPortal:
             value = i['value']
             message = i['field']
             step = i['step']
+            default_value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
             if i['field'] == 'portal_link':
@@ -540,8 +586,11 @@ class FillPortal:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value, i)
-                    status = 'pass'
+                    if path_value == default_value:
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
+                    else:
+                        status = 'value mismatch'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -556,13 +605,17 @@ class FillPortal:
             value = i['value']
             message = i['field']
             step = i['step']
+            default_value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    press_button(path_type, path_value, i)
-                    status = 'pass'
+                    if path_value == default_value:
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
+                    else:
+                        status = 'value mismatch'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -578,6 +631,7 @@ class FillPortal:
                 value = i['value']
                 message = i['field']
                 step = i['step']
+                default_value = i['default_value']
                 if self.anti_flag == i['flag']:
                     continue
                 if value == '' or value is None:
@@ -640,8 +694,11 @@ class FillPortal:
                 if i['is_input'] == 'RB':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        press_radio_button(path_type, path_value, i)
-                        status = 'pass'
+                        if path_value == default_value:
+                            press_radio_button(path_type, path_value, i)
+                            status = 'pass'
+                        else:
+                            status = 'value mismatch'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
