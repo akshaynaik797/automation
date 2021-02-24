@@ -3,9 +3,11 @@ import os
 
 driver_port = 9990
 server_port = 5000
+root_folder = 'automation_data'
 screenshot_folder = 'screenshots'
 attachments_folder = 'attachments'
 logs_folder = 'logs'
+setportalfieldvalues_api = "http://15.206.235.20:9982/setportalfieldvalues"
 
 screenshot_url = "http://3.7.8.68:9982/screenshot/"
 grouping_data_api = 'http://3.7.8.68:9980/get_hospitaltlog'
@@ -38,7 +40,7 @@ chrome_options.add_experimental_option('prefs', {
 
 # full path of chromedriver folder
 WEBDRIVER_FOLDER_PATH = "/home/akshay/Downloads/chromedriver"
-# WEBDRIVER_FOLDER_PATH = "/home/ubuntu/index/chromedriver"
+# WEBDRIVER_FOLDER_PATH = "chromedriver"
 
 
 # period in seconds to wait for loading websites

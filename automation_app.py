@@ -18,6 +18,37 @@ app.config['referrer_url'] = None
 def index():
     return url_for('index', _external=True)
 
+@app.route('/getportalfieldvalues', methods=["POST"])
+def getportalfieldvalues():
+    fields, records, temp = ['refno', 'pname', 'insid'], [], {}
+    data = request.form.to_dict()
+    q = "select refno, pname, insid from portal_field_values where refno=%s limit 1"
+    with mysql.connector.connect(**conn_data) as con:
+        cur = con.cursor()
+        cur.execute(q, (data['refno'],))
+        r = cur.fetchone()
+        if r is not None:
+            for k, v in zip(fields, r):
+                temp[k] = v
+    return temp
+
+@app.route('/setportalfieldvalues', methods=["POST"])
+def setportalfieldvalues():
+    data = request.form.to_dict()
+    q = "select * from portal_field_values where refno=%s limit 1"
+    q1 = "update portal_field_values set pname=%s, insid=%s where refno=%s and pname!='' and insid!=''"
+    q2 = "insert into portal_field_values (refno, pname, insid) values (%s, %s, %s)"
+    with mysql.connector.connect(**conn_data) as con:
+        cur = con.cursor()
+        cur.execute(q, (data['refno'],))
+        r = cur.fetchone()
+        if r is not None:
+            cur.execute(q1, (data['pname'], data['insid'], data['refno']))
+        else:
+            cur.execute(q2, (data['refno'], data['pname'], data['insid']))
+        con.commit()
+    return jsonify("done")
+
 @app.route('/run', methods=["GET"])
 def run():
     data = request.args.to_dict()

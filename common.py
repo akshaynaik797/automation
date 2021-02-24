@@ -1,5 +1,7 @@
 import random
 from copy import deepcopy
+from distutils.dir_util import remove_tree
+from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
@@ -7,7 +9,7 @@ import mysql.connector
 from datetime import datetime
 
 from settings import conn_data, logs_folder, mss_no_data_api, grouping_data_api, \
-    update_hospitaltlog_api, screenshot_folder, screenshot_url
+    update_hospitaltlog_api, screenshot_folder, screenshot_url, root_folder, setportalfieldvalues_api
 from time import sleep
 import os
 
@@ -43,9 +45,17 @@ class FillPortalData:
         self.anti_flag = 'P'
         self.transaction_id = transaction_id
 
+        if os.path.exists(root_folder):
+            remove_tree(root_folder)
+        tmp = os.path.join(root_folder, self.mss_no)
+        Path(tmp).mkdir(parents=True, exist_ok=True)
         r1 = requests.post(mss_no_data_api, data={"pid": self.mss_no})
         if r1.status_code == 200:
             self.data = r1.json()
+            pname, insid = self.data['0']['PatientName'], self.data['0']['InsurerID']
+            r2 = requests.post(setportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
+            for i in self.data['0']['Lastdoc']:
+                download_file1(i['Doc'], self.mss_no)
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
                 'default_value', 'step', 'seq', 'relation', 'flag')
@@ -851,6 +861,19 @@ def update_hospitaltlog(**kwargs):
     return x.text
     ########
 
+def download_file1(url, mss_no):
+    # open in binary mode
+    a = urlparse(url)
+    # print(a.path)
+    # print(os.path.basename(a.path))
+    tmp = os.path.join(root_folder, mss_no)
+    Path(tmp).mkdir(parents=True, exist_ok=True)
+    with open(tmp + '/' + os.path.basename(a.path), "wb") as file:
+        # get request
+        response = requests.get(url)
+        # write to file
+        file.write(response.content)
+        return os.path.abspath(tmp + '/' + os.path.basename(a.path))
 
 def download_file(url):
     # open in binary mode
@@ -914,6 +937,7 @@ if __name__ == '__main__':
                                             Type=j['Type'], status=j['status'])
                     finally:
                         portal1.home()
+                    remove_tree(root_folder)
                 portal.logout()
                 driver.quit()
         except:
