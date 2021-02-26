@@ -60,7 +60,7 @@ def run():
     else:
         driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
         portal = FillPortal(data['mss_no'], data['hosp_id'])
-        z = portal.visit_portal()
+        z = portal.visit_portal(driver=driver)
         if z is None or z == 'data:,':
             custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
         else:
@@ -107,4 +107,4 @@ def screenshot(filename):
     return send_from_directory(screenshot_folder, filename, mimetype='image/gif')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=9982)
+    app.run(host="0.0.0.0", port=9985)

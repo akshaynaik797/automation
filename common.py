@@ -1,6 +1,8 @@
 import random
 from copy import deepcopy
 from distutils.dir_util import remove_tree
+from os import listdir
+from os.path import abspath, isfile, join
 from pathlib import Path
 from urllib.parse import urlparse
 import re
@@ -362,7 +364,7 @@ class FillPortalData:
                 if i['is_input'] == 'F':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        upload_file(value, path_type, path_value)
+                        upload_file(self.mss_no, path_value)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -373,7 +375,6 @@ class FillPortalData:
                     insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
-                    z = 1
                 if i['is_input'] == 'LIST':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -388,9 +389,177 @@ class FillPortalData:
                     insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
-
+                if i['is_input'] == 'W':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        tmp_window = driver.current_window_handle
+                        for window in driver.window_handles:
+                            tmp_window = window
+                        driver.switch_to.window(tmp_window)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'Loop':
+                    seq = i["seq"]
+                    self.execute_loop(seq)
             except:
-                z = 1
+                log_exceptions()
+
+    def execute_loop(self, seq):
+        for i in self.records:
+            try:
+                if i["seq"] != seq:
+                    continue
+                value = i['value']
+                message = i['field']
+                step = i['step']
+                default_value = i['default_value']
+                if self.anti_flag == i['flag']:
+                    continue
+                if value == '' or value is None:
+                    value = i['default_value']
+                if i['field'] == 'portal_link':
+                    try:
+                        visit_portal(value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'I':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        fill_input(value, path_type, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'B' or i['is_input'] == 'LINK':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    if '{' in path_value:
+                        tmp = re.compile(r"(?<={).*(?=})").search(path_value)
+                        if tmp is not None:
+                            tmp = tmp.group().strip()
+                            temp = self.data
+                            for j in tmp.split(':'):
+                                try:
+                                    temp = temp[j.strip()]
+                                except:
+                                    pass
+                            if isinstance(temp, str):
+                                path_value = re.sub(r"(?<={).*(?=})", temp, path_value)
+                    try:
+                        if path_value == default_value:
+                            press_button(path_type, path_value, i)
+                            status = 'pass'
+                        else:
+                            status = 'value mismatch'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'S':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        search_and_click(path_type, path_value, i)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'RB':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        if path_value == default_value:
+                            press_radio_button(path_type, path_value, i)
+                            status = 'pass'
+                        else:
+                            status = 'value mismatch'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'F':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        upload_file(self.mss_no, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'LIST':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        select_option(value, path_type, path_value)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+                if i['is_input'] == 'W':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        tmp_window = driver.current_window_handle
+                        for window in driver.window_handles:
+                            tmp_window = window
+                        driver.switch_to.window(tmp_window)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
+            except:
+                log_exceptions()
+
 
 class FillPortal:
     def __init__(self, mss_no, hosp_id):
@@ -487,7 +656,9 @@ class FillPortal:
             return temp
         return ''
 
-    def visit_portal(self):
+    def visit_portal(self, **kwargs):
+        if 'driver' in kwargs:
+            driver = kwargs['driver']
         for i in self.login_records:
             value = i['value']
             message = i['field']
@@ -711,7 +882,7 @@ class FillPortal:
                 if i['is_input'] == 'F':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        upload_file(value, path_type, path_value)
+                        upload_file(self.mss_no, path_value)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -722,7 +893,6 @@ class FillPortal:
                     insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
-                    z = 1
                 if i['is_input'] == 'LIST':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -737,9 +907,87 @@ class FillPortal:
                     insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
                                status, message, screenshot_url + filename, value)
                     print(i['step'], i['value'])
+                if i['is_input'] == 'W':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        tmp_window = driver.current_window_handle
+                        for window in driver.window_handles:
+                            tmp_window = window
+                        driver.switch_to.window(tmp_window)
+                        status = 'pass'
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
+                    filename = f"{random.randint(99999, 999999)}.png"
+                    sleep(1)
+                    driver.save_screenshot(screenshot_folder + '/' + filename)
+                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
+                               status, message, screenshot_url + filename, value)
+                    print(i['step'], i['value'])
 
             except:
                 z = 1
+
+
+def code_calendar_medi_buddy(xpath, value, **kwargs):
+    #format to submit is 28-Feb-2021
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    try:
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        driver.execute_script('arguments[0].removeAttribute("readonly")', element)
+        element.clear()
+        element.send_keys(value)
+        return True
+    except:
+        log_exceptions()
+        return False
+
+def code_calendar_enh_star(xpath, value, **kwargs):
+    #format to submit is 2021-02-26
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    try:
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        driver.execute_script('arguments[0].removeAttribute("readonly")', element)
+        element.clear()
+        element.send_keys(value)
+        return True
+    except:
+        log_exceptions()
+        return False
+
+def code_calendar_preauth_star(xpath, value, field, **kwargs):
+    #format to submit is 28-Feb-2021 12:14:15
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    if field == 'doa':
+        no = '2'
+    else:
+        no = 4
+    time = datetime.strptime('%d/%b/%Y %H:%M:%S', value).strftime('%d/%b/%Y %H:%M:%p')
+    time = time.split(' ')[-1]
+    date = datetime.strptime('%d-%B-%Y %H:%M:%S', value)
+    h, m, p = time.split(':')
+    ampm = f'//*[@id="myForm"]/div[{no}]/div[2]/div/div/table/tbody/tr[2]/td[6]/button'
+    mm = f'//*[@id="myForm"]/div[2]/div[{no}]/div/div/table/tbody/tr[2]/td[3]/input'
+    hh = f'//*[@id="myForm"]/div[2]/div[{no}]/div/div/table/tbody/tr[2]/td[1]/input'
+    try:
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        driver.execute_script('arguments[0].removeAttribute("readonly")', element)
+        element.clear()
+        element.send_keys(date)
+        WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, mm))).send_keys(m)
+        WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, hh))).send_keys(h)
+        if p == 'PM':
+            WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, ampm))).click()
+        return True
+    except:
+        log_exceptions()
+        return False
 
 
 def insert_log(tab_id, transactionid, referenceno, insurer, process, step, status, message, url, api_value):
@@ -799,14 +1047,18 @@ def get_data_from_db(insurer_id):
     return records
 
 
-def visit_portal(link):
+def visit_portal(link, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
     if check_portal(link):
         driver.get(link)
         return True
     return False
 
 
-def fill_input(data, path_type, path):
+def fill_input(data, path_type, path, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
     if path_type == 'xpath':
         for i in range(2):
             element = WebDriverWait(driver, wait) \
@@ -818,7 +1070,9 @@ def fill_input(data, path_type, path):
         pass
 
 
-def search_and_click(path_type, path, path_row):
+def search_and_click(path_type, path, path_row, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
     value = path_row['value']
     if value == '':
         value = path_row['default_value']
@@ -830,13 +1084,17 @@ def search_and_click(path_type, path, path_row):
                 j.click()
 
 
-def press_radio_button(path_type, path, path_row):
+def press_radio_button(path_type, path, path_row, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
 
 
-def press_button(path_type, path, path_row):
+def press_button(path_type, path, path_row, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
     seq, result = int(path_row['seq']) + 1, None
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
@@ -851,14 +1109,19 @@ def press_button(path_type, path, path_row):
                 .until(EC.visibility_of_element_located((By.XPATH, result[0])))
 
 
-def upload_file(data, path_type, path):
-    for j in [i['Doc'] for i in data]:
-        file_path = download_file(j)
+def upload_file(mss_no, path, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    mypath = os.path.join(root_folder, mss_no)
+    onlyfiles = [abspath(f) for f in listdir(mypath) if isfile(join(mypath, f))]
+    for j in onlyfiles:
         WebDriverWait(driver, wait) \
-            .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(file_path)
+            .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(j)
 
 
-def select_option(data, path_type, path):
+def select_option(data, path_type, path, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
     select = Select(WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, path))))
     select.select_by_visible_text(data)
     pass
