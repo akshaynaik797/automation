@@ -64,9 +64,9 @@ def run():
         if z is None or z == 'data:,':
             custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
         else:
-            portal.login()
-            portal.home()
-            portal.execute()
+            portal.login(driver=driver)
+            portal.home(driver=driver)
+            portal.execute(driver=driver)
     driver.quit()
     if os.path.exists(root_folder):
         remove_tree(root_folder)
@@ -107,4 +107,4 @@ def screenshot(filename):
     return send_from_directory(screenshot_folder, filename, mimetype='image/gif')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=9985)
+    app.run(host="0.0.0.0", port=9982)

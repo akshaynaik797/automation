@@ -62,12 +62,7 @@ element.click()
 xp = '/html/body/div[1]/section/section/div/div[1]/angular-tabs/div/div[3]/div/div/div[2]/div[1]/form/div[1]/div/div[1]/div[2]/div/input'
 doa = WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, xp)))
-a = doa.get_attribute('value')
-driver.execute_script('arguments[0].removeAttribute("readonly")', doa)
-driver.execute_script('arguments[0].removeAttribute("required")', doa)
-driver.execute_script('arguments[0].removeAttribute("style")', doa)
-driver.execute_script('arguments[0].removeAttribute("value")', doa)
-driver.execute_script("arguments[0].setAttribute('value',arguments[1])", doa, '2021-02-26')
+doa.click()
 b = doa.get_attribute('value')
 xp = '//*[@id="myForm"]/div[2]/div[2]/div/div/table/tbody/tr[2]/td[3]/input'
 value = '54'

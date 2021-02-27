@@ -174,11 +174,8 @@ class FillPortalData:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    if path_value == default_value:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
-                    else:
-                        status = 'value mismatch'
+                    press_button(path_type, path_value, i)
+                    status = 'pass'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -224,11 +221,9 @@ class FillPortalData:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    if path_value == default_value:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
-                    else:
-                        status = 'value mismatch'
+                    press_button(path_type, path_value, i)
+                    status = 'pass'
+
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -249,11 +244,8 @@ class FillPortalData:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    if path_value == default_value:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
-                    else:
-                        status = 'value mismatch'
+                    press_button(path_type, path_value, i)
+                    status = 'pass'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -316,11 +308,8 @@ class FillPortalData:
                             if isinstance(temp, str):
                                 path_value = re.sub(r"(?<={).*(?=})", temp, path_value)
                     try:
-                        if path_value == default_value:
-                            press_button(path_type, path_value, i)
-                            status = 'pass'
-                        else:
-                            status = 'value mismatch'
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -347,11 +336,8 @@ class FillPortalData:
                 if i['is_input'] == 'RB':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        if path_value == default_value:
-                            press_radio_button(path_type, path_value, i)
-                            status = 'pass'
-                        else:
-                            status = 'value mismatch'
+                        press_radio_button(path_type, path_value, i)
+                        status = 'pass'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -467,11 +453,8 @@ class FillPortalData:
                             if isinstance(temp, str):
                                 path_value = re.sub(r"(?<={).*(?=})", temp, path_value)
                     try:
-                        if path_value == default_value:
-                            press_button(path_type, path_value, i)
-                            status = 'pass'
-                        else:
-                            status = 'value mismatch'
+                        press_button(path_type, path_value, i)
+                        status = 'pass'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -498,11 +481,8 @@ class FillPortalData:
                 if i['is_input'] == 'RB':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        if path_value == default_value:
-                            press_radio_button(path_type, path_value, i)
-                            status = 'pass'
-                        else:
-                            status = 'value mismatch'
+                        press_radio_button(path_type, path_value, i)
+                        status = 'pass'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -629,6 +609,8 @@ class FillPortal:
                                 except TypeError:
                                     with open('logs/api_field_error.log', 'a') as fp:
                                         print(str(datetime.now()), self.mss_no, row['api_field'], sep=',', file=fp)
+                                except:
+                                    log_exceptions()
                                     temp = ''
                             if isinstance(temp, str):
                                 row['value'] = temp.strip()
@@ -637,6 +619,9 @@ class FillPortal:
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
+            ####for test purpose
+            self.status = 'Query Sent To TPA/ Insurer'
+            ####
             custom_log_data(mss_no=self.mss_no, status=self.status, records=self.data['db_data'], filename="records_db")
             for i in self.data['db_data']:
                 if i['process'] == 'login':
@@ -667,7 +652,7 @@ class FillPortal:
                 continue
             if 'link' in message:
                 try:
-                    flag = visit_portal(value)
+                    flag = visit_portal(value, driver=driver)
                     if flag is True:
                         status = 'pass'
                     else:
@@ -683,7 +668,9 @@ class FillPortal:
                 return driver.current_url
         return None
 
-    def login(self):
+    def login(self, **kwargs):
+        if 'driver' in kwargs:
+            driver = kwargs['driver']
         for i in self.login_records:
             value = i['value']
             message = i['field']
@@ -694,7 +681,7 @@ class FillPortal:
             if i['is_input'] == 'I' and 'link' not in i['field']:
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    fill_input(value, path_type, path_value)
+                    fill_input(value, path_type, path_value, driver=driver)
                     status = 'pass'
                 except:
                     status = 'fail'
@@ -707,11 +694,8 @@ class FillPortal:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    if path_value == default_value:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
-                    else:
-                        status = 'value mismatch'
+                    press_button(path_type, path_value, i, driver=driver)
+                    status = 'pass'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -721,7 +705,9 @@ class FillPortal:
                 insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
                            status, message, screenshot_url + filename, value)
 
-    def logout(self):
+    def logout(self, **kwargs):
+        if 'driver' in kwargs:
+            driver = kwargs['driver']
         for i in self.logout_records:
             value = i['value']
             message = i['field']
@@ -731,7 +717,7 @@ class FillPortal:
                 continue
             if i['field'] == 'portal_link':
                 try:
-                    visit_portal(value)
+                    visit_portal(value, driver=driver)
                     status = 'pass'
                 except:
                     status = 'fail'
@@ -744,7 +730,7 @@ class FillPortal:
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    fill_input(value, path_type, path_value)
+                    fill_input(value, path_type, path_value, driver=driver)
                     status = 'pass'
                 except:
                     status = 'fail'
@@ -757,11 +743,8 @@ class FillPortal:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    if path_value == default_value:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
-                    else:
-                        status = 'value mismatch'
+                    press_button(path_type, path_value, i, driver=driver)
+                    status = 'pass'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -771,7 +754,9 @@ class FillPortal:
                 insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
                            status, message, screenshot_url + filename, value)
 
-    def home(self):
+    def home(self, **kwargs):
+        if 'driver' in kwargs:
+            driver = kwargs['driver']
         for i in self.home_records:
             value = i['value']
             message = i['field']
@@ -782,11 +767,8 @@ class FillPortal:
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
-                    if path_value == default_value:
-                        press_button(path_type, path_value, i)
-                        status = 'pass'
-                    else:
-                        status = 'value mismatch'
+                    press_button(path_type, path_value, i, driver=driver)
+                    status = 'pass'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -796,7 +778,9 @@ class FillPortal:
                 insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "home", step,
                            status, message, screenshot_url + filename, value)
 
-    def execute(self):
+    def execute(self, **kwargs):
+        if 'driver' in kwargs:
+            driver = kwargs['driver']
         for i in self.records:
             try:
                 value = i['value']
@@ -809,7 +793,7 @@ class FillPortal:
                     value = i['default_value']
                 if i['field'] == 'portal_link':
                     try:
-                        visit_portal(value)
+                        visit_portal(value, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -823,7 +807,7 @@ class FillPortal:
                 if i['is_input'] == 'I':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        fill_input(value, path_type, path_value)
+                        fill_input(value, path_type, path_value, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -837,7 +821,7 @@ class FillPortal:
                 if i['is_input'] == 'B' or i['is_input'] == 'LINK':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        press_button(path_type, path_value, i)
+                        press_button(path_type, path_value, i, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -851,7 +835,7 @@ class FillPortal:
                 if i['is_input'] == 'S':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        search_and_click(path_type, path_value, i)
+                        search_and_click(path_type, path_value, i, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -865,11 +849,8 @@ class FillPortal:
                 if i['is_input'] == 'RB':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        if path_value == default_value:
-                            press_radio_button(path_type, path_value, i)
-                            status = 'pass'
-                        else:
-                            status = 'value mismatch'
+                        press_radio_button(path_type, path_value, i, driver=driver)
+                        status = 'pass'
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
@@ -882,7 +863,7 @@ class FillPortal:
                 if i['is_input'] == 'F':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        upload_file(self.mss_no, path_value)
+                        upload_file(self.mss_no, path_value, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
@@ -896,7 +877,7 @@ class FillPortal:
                 if i['is_input'] == 'LIST':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        select_option(value, path_type, path_value)
+                        select_option(value, path_type, path_value, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
