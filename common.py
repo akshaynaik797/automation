@@ -57,8 +57,8 @@ class FillPortalData:
             self.data = r1.json()
             pname, insid = self.data['0']['PatientName'], self.data['0']['InsurerID']
             r2 = requests.post(setportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
-            for i in self.data['0']['Lastdoc']:
-                download_file1(i['Doc'], self.mss_no)
+            # for i in self.data['0']['Lastdoc']:
+            #     download_file1(i['Doc'], self.mss_no)
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
                 'default_value', 'step', 'seq', 'relation', 'flag')
@@ -569,8 +569,8 @@ class FillPortal:
             self.data = r1.json()
             pname, insid = self.data['0']['PatientName'], self.data['0']['InsurerID']
             r2 = requests.post(setportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
-            for i in self.data['0']['Lastdoc']:
-                download_file1(i['Doc'], self.mss_no)
+            # for i in self.data['0']['Lastdoc']:
+            #     download_file1(i['Doc'], self.mss_no)
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
                 'default_value', 'step', 'seq', 'relation', 'flag')
@@ -619,9 +619,6 @@ class FillPortal:
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
-            ####for test purpose
-            self.status = 'Query Sent To TPA/ Insurer'
-            ####
             custom_log_data(mss_no=self.mss_no, status=self.status, records=self.data['db_data'], filename="records_db")
             for i in self.data['db_data']:
                 if i['process'] == 'login':
@@ -669,9 +666,12 @@ class FillPortal:
         return None
 
     def login(self, **kwargs):
+        status = ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.login_records:
+            if status == 'fail':
+                break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -686,11 +686,6 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-                filename = f"{random.randint(99999, 999999)}.png"
-                sleep(1)
-                driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
-                           status, message, screenshot_url + filename, value)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -699,16 +694,23 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-                filename = f"{random.randint(99999, 999999)}.png"
-                sleep(1)
-                driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "login", step,
-                           status, message, screenshot_url + filename, value)
+        filename = f"{random.randint(99999, 999999)}.png"
+        sleep(1)
+        driver.save_screenshot(screenshot_folder + '/' + filename)
+        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                   step,
+                   status, message, screenshot_url + filename, value)
+        if status == 'fail':
+            return False
+        return True
 
     def logout(self, **kwargs):
+        status = ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.logout_records:
+            if status == 'fail':
+                break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -722,11 +724,6 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-                filename = f"{random.randint(99999, 999999)}.png"
-                sleep(1)
-                driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
-                           status, message, screenshot_url + filename, value)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -735,11 +732,6 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-                filename = f"{random.randint(99999, 999999)}.png"
-                sleep(1)
-                driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
-                           status, message, screenshot_url + filename, value)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -748,16 +740,24 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-                filename = f"{random.randint(99999, 999999)}.png"
-                sleep(1)
-                driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "logout", step,
-                           status, message, screenshot_url + filename, value)
+        filename = f"{random.randint(99999, 999999)}.png"
+        sleep(1)
+        driver.save_screenshot(screenshot_folder + '/' + filename)
+        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                   step,
+                   status, message, screenshot_url + filename, value)
+        if status == 'fail':
+            return False
+        return True
+
 
     def home(self, **kwargs):
+        status = ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.home_records:
+            if status == 'fail':
+                break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -772,16 +772,24 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-                filename = f"{random.randint(99999, 999999)}.png"
-                sleep(1)
-                driver.save_screenshot(screenshot_folder + '/' + filename)
-                insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "home", step,
-                           status, message, screenshot_url + filename, value)
+        filename = f"{random.randint(99999, 999999)}.png"
+        sleep(1)
+        driver.save_screenshot(screenshot_folder + '/' + filename)
+        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                   step,
+                   status, message, screenshot_url + filename, value)
+        if status == 'fail':
+            return False
+        return True
+
 
     def execute(self, **kwargs):
+        status = ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.records:
+            if status == 'fail':
+                break
             try:
                 value = i['value']
                 message = i['field']
@@ -798,12 +806,6 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
                 if i['is_input'] == 'I':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -812,12 +814,7 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
+
                 if i['is_input'] == 'B' or i['is_input'] == 'LINK':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -826,12 +823,6 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
                 if i['is_input'] == 'S':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -840,12 +831,6 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
                 if i['is_input'] == 'RB':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -854,12 +839,6 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
                 if i['is_input'] == 'F':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -868,12 +847,6 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
                 if i['is_input'] == 'LIST':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -882,12 +855,6 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
                 if i['is_input'] == 'W':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
@@ -899,18 +866,41 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
-                    filename = f"{random.randint(99999, 999999)}.png"
-                    sleep(1)
-                    driver.save_screenshot(screenshot_folder + '/' + filename)
-                    insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'], step,
-                               status, message, screenshot_url + filename, value)
-                    print(i['step'], i['value'])
-
             except:
-                z = 1
+                log_exceptions()
+        filename = f"{random.randint(99999, 999999)}.png"
+        sleep(1)
+        driver.save_screenshot(screenshot_folder + '/' + filename)
+        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                   step,
+                   status, message, screenshot_url + filename, value)
+        if status == 'fail':
+            return False
+        return True
+
+def code_upload_preauth_icici(data, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    refno = data['0']['RefNo']
+    lastdocs = data['0']['Lastdoc']
+    lenth = len(lastdocs)
+    cnt = 2
+    add_more = '//*[@id="table-bottom"]/div[3]/input'
+    for i, row in enumerate(lastdocs):
+        option, button = f'//*[@id="ddlDocumentType{cnt}"]/option[14]', f'//*[@id="btnBrowse{cnt}"]'
+        fp = download_file1(row['Doc'], refno)
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, option))).click()
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, button))).send_keys(fp)
+        if lenth > 1:
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, add_more))).click()
+        cnt = cnt + 1
 
 
-def code_calendar_medi_buddy(xpath, value, **kwargs):
+
+def code_calendar_mb(xpath, value, **kwargs):
     #format to submit is 28-Feb-2021
     if 'driver' in kwargs:
         driver = kwargs['driver']
@@ -925,8 +915,8 @@ def code_calendar_medi_buddy(xpath, value, **kwargs):
         log_exceptions()
         return False
 
-def code_calendar_enh_star(xpath, value, **kwargs):
-    #format to submit is 2021-02-26
+def code_calendar_preauth_icici(xpath, value, **kwargs):
+    #format to submit is 21/03/2021
     if 'driver' in kwargs:
         driver = kwargs['driver']
     try:
@@ -1157,10 +1147,8 @@ def grouping_ins_hosp():
 def update_hospitaltlog(**kwargs):
     fields = 'fStatus', 'fLock', 'Type_Ref'
     url = update_hospitaltlog_api
-    #########for test purpose
     x = requests.post(url, data=kwargs)
     return x.text
-    ########
 
 def download_file1(url, mss_no):
     # open in binary mode
@@ -1203,14 +1191,6 @@ if __name__ == '__main__':
             for i in a:
                 if len(a[i]) == 0:
                     continue
-                ####for test purpose
-                # zz = '36'
-                # if zz in i:
-                #     continue
-                # zz = '6'
-                # if zz in i:
-                #     continue
-                ####
                 portal = FillPortalData(a[i][0]['Type_Ref'], a[i][0]['transactionID'])
                 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
                 z = portal.visit_portal()

@@ -19,13 +19,6 @@ conn_data = {'host': "iclaimdev.caq5osti8c47.ap-south-1.rds.amazonaws.com",
              'password': "Welcome1!",
              'database': 'portals'}
 
-#####for test purpose
-# conn_data = {'host': "iclaimdev.caq5osti8c47.ap-south-1.rds.amazonaws.com",
-#              'user': "admin",
-#              'password': "Welcome1!",
-#              'database': 'portals_rep'}
-######
-
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option('prefs', {
 "download.default_directory": os.path.abspath(attachments_folder), #Change default directory for downloads
@@ -39,7 +32,9 @@ chrome_options.add_experimental_option('prefs', {
 
 
 # full path of chromedriver folder
-WEBDRIVER_FOLDER_PATH = "/home/akshay/Downloads/chromedriver"
+####for test purpose
+# WEBDRIVER_FOLDER_PATH = "/home/akshay/Downloads/chromedriver"
+####
 # WEBDRIVER_FOLDER_PATH = "chromedriver"
 
 

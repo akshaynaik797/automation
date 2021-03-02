@@ -54,6 +54,7 @@ def setportalfieldvalues():
 
 @app.route('/run', methods=["GET"])
 def run():
+    response, step = {}, ""
     data = request.args.to_dict()
     if 'mss_no' not in data and 'hosp_id' not in data:
         return jsonify("pass mss_no and hosp_id")
@@ -62,15 +63,23 @@ def run():
         portal = FillPortal(data['mss_no'], data['hosp_id'])
         z = portal.visit_portal(driver=driver)
         if z is None or z == 'data:,':
+            step = "portal check"
             custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
+            response = {'error': "see logs", "step": step}
         else:
-            portal.login(driver=driver)
-            portal.home(driver=driver)
-            portal.execute(driver=driver)
+            step = "login"
+            if portal.login(driver=driver):
+                step = "home"
+                if portal.home(driver=driver):
+                    step = "execution"
+                    if portal.execute(driver=driver):
+                        response = {'msg': 'success'}
+            else:
+                response = {'error': "see logs", "step": step}
     driver.quit()
     if os.path.exists(root_folder):
         remove_tree(root_folder)
-    return data
+    return response
 
 @app.route('/get_log', methods=["POST"])
 def get_log():

@@ -9,6 +9,7 @@ from datetime import datetime
 
 from selenium.webdriver.common.keys import Keys
 
+from common import code_upload_preauth_icici
 from settings import conn_data, logs_folder, mss_no_data_api, grouping_data_api, \
     update_hospitaltlog_api, screenshot_folder, screenshot_url
 from time import sleep
@@ -25,61 +26,40 @@ from selenium.webdriver.support.ui import WebDriverWait
 from make_log import log_exceptions
 from settings import WAIT_PERIOD, WEBDRIVER_FOLDER_PATH, attachments_folder, chrome_options
 wait = WAIT_PERIOD
+import json
+
+with open('temp.json') as fp:
+    data = json.load(fp)
 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
 a = driver.current_url
-driver.get('https://spp.starhealth.in/')
-xp = '/html/body/div[1]/section/section/div[1]/div[2]/div/form/div[1]/input'
-value = 'mediclaim.noble@gmail.com'
+driver.get('https://www.icicilombard.com/IL-HEALTH-CARE')
+xp = '//*[@id="username"]'
+value = 'ilhc2444'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = "/html/body/div[1]/section/section/div[1]/div[2]/div/form/div[2]/input"
-value = 'noble123456'
+xp = '//*[@id="password"]'
+value = 'icicilombard1234'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = "/html/body/div[1]/section/section/div[1]/div[2]/div/form/button"
+xp = '//*[@id="btnLogin"]'
 value = 'mediclaim.noble@gmail.com'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = "/html/body/div[1]/section/header/div[3]/a"
+xp = '//*[@id="content"]/ul/li[1]/div[1]/div[1]/span[1]/a'
 value = 'mediclaim.noble@gmail.com'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '/html/body/div[1]/section/header/div[1]/div[1]/div/div[1]/select'
-value = 'mediclaim.noble@gmail.com'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '/html/body/div[1]/section/header/div[1]/div[1]/div/div[1]/select/option[2]'
+xp = '//*[@id="hcnUhid"]'
+value = 'IL18679704801'
+WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
+xp = '//*[@id="btnSearch"]'
 value = '8564249-2'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '//*[@id="claimSearchFormClaimNo"]'
-value = 'CIR/2021/151119/2079215'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = '/html/body/div[1]/section/header/div[1]/div[1]/div/div[2]/form/div/div/div[1]/span/button'
-value = 'mediclaim.noble@gmail.com'
+xp = '//*[@id="link-table"]/div[2]/div/table/tbody/tr/td[1]'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '/html/body/div[1]/section/section/div/div[1]/angular-tabs/div/div[1]/div/div/div[1]/table/tbody/tr/td[1]'
+xp = '/html/body/div[1]/div[3]/div/div[6]/form/div[1]/div[5]/div[2]/p[1]/input[1]'
 value = 'mediclaim.noble@gmail.com'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '/html/body/div[1]/section/section/div/div[1]/angular-tabs/div/div[1]/div/div[2]/div[2]/div/div/div[2]/div[18]/div/div/button[2]'
-value = 'mediclaim.noble@gmail.com'
-element = WebDriverWait(driver, wait).until(EC.presence_of_element_located((By.XPATH, xp)))
-element.click()
-xp = '/html/body/div[1]/section/section/div/div[1]/angular-tabs/div/div[3]/div/div/div[2]/div[1]/form/div[1]/div/div[1]/div[2]/div/input'
-doa = WebDriverWait(driver, wait) \
-            .until(EC.visibility_of_element_located((By.XPATH, xp)))
+doa = WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp)))
 doa.click()
 b = doa.get_attribute('value')
-xp = '//*[@id="myForm"]/div[2]/div[2]/div/div/table/tbody/tr[2]/td[3]/input'
-value = '54'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = '//*[@id="myForm"]/div[2]/div[2]/div/div/table/tbody/tr[2]/td[1]/input'
-value = '11'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = '//*[@id="myForm"]/div[2]/div[2]/div/div/table/tbody/tr[2]/td[6]/button'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-
-
-
-# time = WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp)))
-# WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-# WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).clear()
-# driver.execute_script("arguments[0].setAttribute('value',arguments[1])", time, '28')
-# WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-
-
+driver.execute_script('arguments[0].removeAttribute("readonly")', doa)
+doa.clear()
+doa.send_keys('21/03/2021')
+code_upload_preauth_icici(data, driver=driver)
 pass
