@@ -866,6 +866,13 @@ class FillPortal:
                     except:
                         status = 'fail'
                         log_exceptions(row=i)
+                if i['is_input'] == 'CODE':
+                    path_type, path_value = i['path_type'], i['path_value']
+                    try:
+                        exec_code(value, path_value, driver=driver, data=self.data)
+                    except:
+                        status = 'fail'
+                        log_exceptions(row=i)
             except:
                 log_exceptions()
         filename = f"{random.randint(99999, 999999)}.png"
@@ -877,6 +884,17 @@ class FillPortal:
         if status == 'fail':
             return False
         return True
+
+def exec_code(value, path_value, **kwargs):
+    data = kwargs['data']
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    if path_value == 'code_upload_preauth_icici':
+        code_upload_preauth_icici(data, **kwargs)
+    if path_value == 'code_calendar_preauth_icici':
+        code_calendar_preauth_icici(path_value, value, **kwargs)
+
+
 
 def code_upload_preauth_icici(data, **kwargs):
     if 'driver' in kwargs:
@@ -916,6 +934,36 @@ def code_calendar_mb(xpath, value, **kwargs):
         return False
 
 def code_calendar_preauth_icici(xpath, value, **kwargs):
+    #format to submit is 21/03/2021
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    try:
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        driver.execute_script('arguments[0].removeAttribute("readonly")', element)
+        element.clear()
+        element.send_keys(value)
+        return True
+    except:
+        log_exceptions()
+        return False
+
+def code_calendar_hdfc(xpath, value, **kwargs):
+    #format to submit is 21/03/2021
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    try:
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        driver.execute_script('arguments[0].removeAttribute("readonly")', element)
+        element.clear()
+        element.send_keys(value)
+        return True
+    except:
+        log_exceptions()
+        return False
+
+def code_calendar_hdfc_admn(xpath, value, **kwargs):
     #format to submit is 21/03/2021
     if 'driver' in kwargs:
         driver = kwargs['driver']

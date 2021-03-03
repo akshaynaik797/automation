@@ -35,7 +35,7 @@ chrome_options.add_experimental_option('prefs', {
 ####for test purpose
 # WEBDRIVER_FOLDER_PATH = "/home/akshay/Downloads/chromedriver"
 ####
-# WEBDRIVER_FOLDER_PATH = "chromedriver"
+WEBDRIVER_FOLDER_PATH = "./chromedriver"
 
 
 # period in seconds to wait for loading websites

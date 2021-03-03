@@ -32,34 +32,24 @@ with open('temp.json') as fp:
     data = json.load(fp)
 driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
 a = driver.current_url
-driver.get('https://www.icicilombard.com/IL-HEALTH-CARE')
-xp = '//*[@id="username"]'
-value = 'ilhc2444'
+driver.get('https://heapp5.hdfcergo.com/ProviderPortal')
+xp = '//*[@id="txtUserName"]'
+value = 'HEGIC-HS-06338'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = '//*[@id="password"]'
-value = 'icicilombard1234'
+xp = '//*[@id="txtPassword"]'
+value = 'noble@123'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = '//*[@id="btnLogin"]'
+xp = '//*[@id="btnDirectLogin"]'
 value = 'mediclaim.noble@gmail.com'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '//*[@id="content"]/ul/li[1]/div[1]/div[1]/span[1]/a'
-value = 'mediclaim.noble@gmail.com'
+driver.get('https://heapp5.hdfcergo.com/ProviderPortal/GeneratePreauth/GeneratePreauthClaim?ClaimNO=RC-HS20-12316878&ActionType=EN')
+xp = '/html/body/div[2]/div/div[5]/div[2]/a'
 WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '//*[@id="hcnUhid"]'
-value = 'IL18679704801'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).send_keys(value)
-xp = '//*[@id="btnSearch"]'
-value = '8564249-2'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '//*[@id="link-table"]/div[2]/div/table/tbody/tr/td[1]'
-WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp))).click()
-xp = '/html/body/div[1]/div[3]/div/div[6]/form/div[1]/div[5]/div[2]/p[1]/input[1]'
-value = 'mediclaim.noble@gmail.com'
+xp = '//*[@id="txtAdmissionDate"]'
 doa = WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, xp)))
 doa.click()
 b = doa.get_attribute('value')
 driver.execute_script('arguments[0].removeAttribute("readonly")', doa)
 doa.clear()
 doa.send_keys('21/03/2021')
-code_upload_preauth_icici(data, driver=driver)
 pass
