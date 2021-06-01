@@ -7,6 +7,7 @@ import mysql.connector
 
 from selenium import webdriver
 
+import make_log
 from common import FillPortal
 from make_log import custom_log_data
 from settings import screenshot_folder, conn_data, WEBDRIVER_FOLDER_PATH, chrome_options, root_folder
@@ -60,23 +61,27 @@ def run():
         return jsonify("pass mss_no and hosp_id")
     else:
         driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
-        portal = FillPortal(data['mss_no'], data['hosp_id'])
-        z = portal.visit_portal(driver=driver)
-        if z is None or z == 'data:,':
-            step = "portal check"
-            custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
-            response = {'error': "see logs", "step": step}
-        else:
-            step = "login"
-            if portal.login(driver=driver):
-                step = "home"
-                if portal.home(driver=driver):
-                    step = "execution"
-                    if portal.execute(driver=driver):
-                        response = {'msg': 'success'}
-            else:
+        try:
+            portal = FillPortal(data['mss_no'], data['hosp_id'])
+            z = portal.visit_portal(driver=driver)
+            if z is None or z == 'data:,':
+                step = "portal check"
+                custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
                 response = {'error': "see logs", "step": step}
-    driver.quit()
+            else:
+                step = "login"
+                if portal.login(driver=driver):
+                    step = "home"
+                    if portal.home(driver=driver):
+                        step = "execution"
+                        if portal.execute(driver=driver):
+                            response = {'msg': 'success'}
+                else:
+                    response = {'error': "see logs", "step": step}
+        except:
+            make_log.log_exceptions(data=data)
+        finally:
+            driver.quit()
     if os.path.exists(root_folder):
         remove_tree(root_folder)
     return response

@@ -666,7 +666,7 @@ class FillPortal:
         return None
 
     def login(self, **kwargs):
-        status = ""
+        step, message, value, status = "", "", "", ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.login_records:
@@ -705,7 +705,7 @@ class FillPortal:
         return True
 
     def logout(self, **kwargs):
-        status = ""
+        step, message, value, status = "", "", "", ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.logout_records:
@@ -752,7 +752,7 @@ class FillPortal:
 
 
     def home(self, **kwargs):
-        status = ""
+        step, message, value, status = "", "", "", ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.home_records:
@@ -784,7 +784,7 @@ class FillPortal:
 
 
     def execute(self, **kwargs):
-        status = ""
+        step, message, value, status = "", "", "", ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.records:
