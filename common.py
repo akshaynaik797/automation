@@ -114,7 +114,7 @@ class FillPortalData:
                         self.logout_records.append(i)
                     if i['process'] == 'HOME':
                         self.home_records.append(i)
-                    if i['process'] in self.status:
+                    if i['process'].strip() in self.status:
                         self.records.append(i)
 
     def get_api_field(self, api_field):
@@ -576,7 +576,7 @@ class FillPortal:
                 'default_value', 'step', 'seq', 'relation', 'flag')
             with mysql.connector.connect(**conn_data) as con:
                 cur = con.cursor()
-                query = "SELECT * FROM paths where insurer = %s order by seq"
+                query = "SELECT * FROM paths where insurer = %s and (seq is not Null or seq != '') order by seq"
                 cur.execute(query, (self.data['0']['InsurerID'],))
                 result = cur.fetchall()
                 records = []
@@ -627,7 +627,7 @@ class FillPortal:
                     self.logout_records.append(i)
                 if i['process'] == 'HOME':
                     self.home_records.append(i)
-                if i['process'] in self.status:
+                if i['process'].strip() in self.status:
                     self.records.append(i)
 
     def get_api_field(self, api_field):
