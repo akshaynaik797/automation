@@ -584,6 +584,7 @@ class FillPortal:
                     row = dict()
                     for j, k in zip(fields, i):
                         row[j] = k
+                    row['mss_no'] = self.mss_no
                     temp = self.data
                     row['value'] = ''
                     if row['api_field'] is not None and row['api_field'] != '':
