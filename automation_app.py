@@ -72,6 +72,7 @@ def run():
                 step = "login"
                 if portal.login(driver=driver):
                     step = "home"
+                    driver.refresh()
                     if portal.home(driver=driver):
                         step = "execution"
                         if portal.execute(driver=driver):
