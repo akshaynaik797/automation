@@ -83,8 +83,8 @@ def run():
             make_log.log_exceptions(data=data)
         finally:
             driver.quit()
-    if os.path.exists(root_folder):
-        remove_tree(root_folder)
+            if os.path.exists(root_folder):
+                remove_tree(root_folder)
     return response
 
 @app.route('/get_log', methods=["POST"])

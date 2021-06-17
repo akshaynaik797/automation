@@ -569,8 +569,8 @@ class FillPortal:
             self.data = r1.json()
             pname, insid = self.data['0']['PatientName'], self.data['0']['InsurerID']
             r2 = requests.post(setportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
-            # for i in self.data['0']['Lastdoc']:
-            #     download_file1(i['Doc'], self.mss_no)
+            for i in self.data['0']['Lastdoc']:
+                download_file1(i['Doc'], self.mss_no)
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
                 'default_value', 'step', 'seq', 'relation', 'flag')
@@ -585,38 +585,38 @@ class FillPortal:
                     for j, k in zip(fields, i):
                         row[j] = k
                     row['mss_no'] = self.mss_no
-                    temp = self.data
                     row['value'] = ''
                     if row['api_field'] is not None and row['api_field'] != '':
-                        if '+' in row['api_field']:
-                            temp_string = ''
-                            for j in row['api_field'].split('+'):
-                                temp1 = temp
-                                for k in j.split(':'):
+                        tmp = row['api_field']
+                        if ';' in tmp:
+                            value = ""
+                            for i in tmp.split(';'):
+                                temp = self.data
+                                for j in i.split(':'):
                                     try:
-                                        temp1 = temp1[k.strip()]
+                                        temp = temp[j.strip()]
                                     except TypeError:
                                         with open('logs/api_field_error.log', 'a') as fp:
-                                            print(str(datetime.now()), self.mss_no, row['api_field'], sep=',', file=fp)
-                                temp_string = temp_string + ' ' + temp1
-                            row['value'] = temp_string
-                        elif ':' in row['api_field']:
-                            for j in row['api_field'].split(':'):
+                                            print(str(datetime.now()), self.mss_no, j, row['api_field'], sep=',', file=fp)
+                                    except:
+                                        log_exceptions()
+                                        temp = ''
+                                if isinstance(temp, str):
+                                    value += temp.strip()
+                            row['value'] = value
+                        elif ':' in tmp:
+                            temp = self.data
+                            for j in tmp.split(':'):
                                 try:
-                                    if j == '-1':
-                                        temp = temp[int(j.strip())]
-                                    else:
-                                        temp = temp[j.strip()]
+                                    temp = temp[j.strip()]
                                 except TypeError:
                                     with open('logs/api_field_error.log', 'a') as fp:
-                                        print(str(datetime.now()), self.mss_no, row['api_field'], sep=',', file=fp)
+                                        print(str(datetime.now()), self.mss_no, j, row['api_field'], sep=',', file=fp)
                                 except:
                                     log_exceptions()
                                     temp = ''
                             if isinstance(temp, str):
                                 row['value'] = temp.strip()
-                            else:
-                                row['value'] = temp
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
@@ -851,7 +851,11 @@ class FillPortal:
                 if i['is_input'] == 'LIST':
                     path_type, path_value = i['path_type'], i['path_value']
                     try:
-                        select_option(value, path_type, path_value, driver=driver)
+                        if path_type == 'xpath':
+                            # press_button(path_type, path_value, i, driver=driver)
+                            upload_file(self.mss_no, path_value, driver=driver)
+                        else:
+                            select_option(value, path_type, path_value, driver=driver)
                         status = 'pass'
                     except:
                         status = 'fail'
