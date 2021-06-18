@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import re
 
+import pyautogui as pyautogui
 import requests
 import mysql.connector
 from datetime import datetime
@@ -18,7 +19,7 @@ import os
 
 from requests import get
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -684,23 +685,44 @@ class FillPortal:
                 try:
                     fill_input(value, path_type, path_value, driver=driver)
                     status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+            if i['is_input'] == 'C':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    while 1:
+                        sleep(10)
+                        if get_input(value, path_type, path_value, driver=driver):
+                            status = 'pass'
+                            break
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
                     press_button(path_type, path_value, i, driver=driver)
                     status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-        filename = f"{random.randint(99999, 999999)}.png"
-        sleep(1)
-        driver.save_screenshot(screenshot_folder + '/' + filename)
-        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
-                   step,
-                   status, message, screenshot_url + filename, value)
+            filename = f"{random.randint(99999, 999999)}.png"
+            sleep(1)
+            driver.save_screenshot(screenshot_folder + '/' + filename)
+            insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                       step,
+                       status, message, screenshot_url + filename, value)
         if status == 'fail':
             return False
         return True
@@ -730,6 +752,9 @@ class FillPortal:
                 try:
                     fill_input(value, path_type, path_value, driver=driver)
                     status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
@@ -738,15 +763,18 @@ class FillPortal:
                 try:
                     press_button(path_type, path_value, i, driver=driver)
                     status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-        filename = f"{random.randint(99999, 999999)}.png"
-        sleep(1)
-        driver.save_screenshot(screenshot_folder + '/' + filename)
-        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
-                   step,
-                   status, message, screenshot_url + filename, value)
+            filename = f"{random.randint(99999, 999999)}.png"
+            sleep(1)
+            driver.save_screenshot(screenshot_folder + '/' + filename)
+            insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                       step,
+                       status, message, screenshot_url + filename, value)
         if status == 'fail':
             return False
         return True
@@ -763,22 +791,41 @@ class FillPortal:
             message = i['field']
             step = i['step']
             default_value = i['default_value']
+            if value == '' or value is None:
+                value = i['default_value']
             if self.anti_flag == i['flag']:
                 continue
+            if i['is_input'] == 'Link':
+                try:
+                    flag = visit_portal(value, driver=driver)
+                    if flag is True:
+                        status = 'pass'
+                    else:
+                        status = 'fail'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
                     press_button(path_type, path_value, i, driver=driver)
                     status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
-        filename = f"{random.randint(99999, 999999)}.png"
-        sleep(1)
-        driver.save_screenshot(screenshot_folder + '/' + filename)
-        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
-                   step,
-                   status, message, screenshot_url + filename, value)
+            filename = f"{random.randint(99999, 999999)}.png"
+            sleep(1)
+            driver.save_screenshot(screenshot_folder + '/' + filename)
+            insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                       step,
+                       status, message, screenshot_url + filename, value)
         if status == 'fail':
             return False
         return True
@@ -788,104 +835,150 @@ class FillPortal:
         step, message, value, status = "", "", "", ""
         if 'driver' in kwargs:
             driver = kwargs['driver']
+        i_value = None
         for i in self.records:
             if status == 'fail':
                 break
-            try:
-                value = i['value']
-                message = i['field']
-                step = i['step']
-                default_value = i['default_value']
-                if self.anti_flag == i['flag']:
-                    continue
-                if value == '' or value is None:
-                    value = i['default_value']
-                if i['field'] == 'portal_link':
-                    try:
-                        visit_portal(value, driver=driver)
+            value = i['value']
+            message = i['field']
+            step = i['step']
+            default_value = i['default_value']
+            if self.anti_flag == i['flag']:
+                continue
+            if value == '' or value is None:
+                value = i['default_value']
+            if i['is_input'] == 'Link':
+                try:
+                    flag = visit_portal(value, driver=driver)
+                    if flag is True:
                         status = 'pass'
-                    except:
+                    else:
                         status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'I':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        fill_input(value, path_type, path_value, driver=driver)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'I':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    fill_input(value, path_type, path_value, driver=driver)
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
 
-                if i['is_input'] == 'B' or i['is_input'] == 'LINK':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        press_button(path_type, path_value, i, driver=driver)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'S':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        search_and_click(path_type, path_value, i, driver=driver)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'RB':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        press_radio_button(path_type, path_value, i, driver=driver)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'F':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
+            if i['is_input'] == 'B' or i['is_input'] == 'LINK':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    if '{i}' in path_value:
+                        path_value = path_value.replace('{i}', f"[{i_value}]")
+                    if '||' in path_value:
+                        path_list = path_value.split('||')
+                        for xp in path_list:
+                            try:
+                                wait = 5
+                                element = WebDriverWait(driver, wait) \
+                                    .until(EC.visibility_of_element_located((By.XPATH, xp)))
+                                ele_value = element.text
+                                if ele_value == value:
+                                    path_value = xp
+                                    break
+                            except TimeoutException:
+                                pass
+                    press_button(path_type, path_value, i, driver=driver)
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'S':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    i_value = search_and_click(path_type, path_value, i, driver=driver)
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'RB':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    press_radio_button(path_type, path_value, i, driver=driver)
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'F':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    upload_file(self.mss_no, path_value, driver=driver)
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'LIST':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    if path_type == 'xpath':
+                        # press_button(path_type, path_value, i, driver=driver)
                         upload_file(self.mss_no, path_value, driver=driver)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'LIST':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        if path_type == 'xpath':
-                            # press_button(path_type, path_value, i, driver=driver)
-                            upload_file(self.mss_no, path_value, driver=driver)
-                        else:
-                            select_option(value, path_type, path_value, driver=driver)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'W':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        tmp_window = driver.current_window_handle
-                        for window in driver.window_handles:
-                            tmp_window = window
-                        driver.switch_to.window(tmp_window)
-                        status = 'pass'
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-                if i['is_input'] == 'CODE':
-                    path_type, path_value = i['path_type'], i['path_value']
-                    try:
-                        exec_code(value, path_value, driver=driver, data=self.data)
-                    except:
-                        status = 'fail'
-                        log_exceptions(row=i)
-            except:
-                log_exceptions()
-        filename = f"{random.randint(99999, 999999)}.png"
-        sleep(1)
-        driver.save_screenshot(screenshot_folder + '/' + filename)
-        insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
-                   step,
-                   status, message, screenshot_url + filename, value)
+                    else:
+                        select_option(value, path_type, path_value, driver=driver)
+                    if path_type == 'code' and path_value == 'code_upload_icici':
+                        code_upload_preauth_icici(self.data, driver=driver)
+
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'W':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    tmp_window = driver.current_window_handle
+                    for window in driver.window_handles:
+                        tmp_window = window
+                    driver.switch_to.window(tmp_window)
+                    status = 'pass'
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            if i['is_input'] == 'CODE':
+                path_type, path_value = i['path_type'], i['path_value']
+                try:
+                    exec_code(value, path_value, driver=driver, data=self.data)
+                except TimeoutException:
+                    log_exceptions(row=i)
+                    status = 'fail with timeout'
+                except:
+                    status = 'fail'
+                    log_exceptions(row=i)
+            filename = f"{random.randint(99999, 999999)}.png"
+            sleep(1)
+            driver.save_screenshot(screenshot_folder + '/' + filename)
+            insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
+                       step,
+                       status, message, screenshot_url + filename, value)
         if status == 'fail':
             return False
         return True
@@ -1093,19 +1186,40 @@ def fill_input(data, path_type, path, **kwargs):
                 break
         pass
 
+def get_input(data, path_type, path, **kwargs):
+    value = None
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    if path_type == 'xpath':
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, path)))
+        value = element.get_attribute("value")
+        return value
+
 
 def search_and_click(path_type, path, path_row, **kwargs):
+    wait = 5
     if 'driver' in kwargs:
         driver = kwargs['driver']
     value = path_row['value']
     if value == '':
         value = path_row['default_value']
     if path_type == 'xpath':
-        elements = WebDriverWait(driver, wait) \
-            .until(EC.visibility_of_all_elements_located((By.XPATH, path)))
-        for i, j in enumerate(elements):
-            if value in j.text:
-                j.click()
+        try:
+            for i in range(10):
+                try:
+                    tmp_path = path
+                    tmp_path = tmp_path.replace('{i}', f"[{i}]")
+                    element = WebDriverWait(driver, wait) \
+                        .until(EC.visibility_of_element_located((By.XPATH, tmp_path)))
+                    ele_value = element.text
+                    if value == ele_value:
+                        return i
+                except:
+                    pass
+
+        except:
+            log_exceptions()
 
 
 def press_radio_button(path_type, path, path_row, **kwargs):
@@ -1123,24 +1237,25 @@ def press_button(path_type, path, path_row, **kwargs):
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
-        with mysql.connector.connect(**conn_data) as con:
-            cur = con.cursor()
-            query = "select path_value from paths where insurer=%s and process=%s and seq=%s limit 1;"
-            cur.execute(query, (path_row['insurer'], path_row['process'], seq))
-            result = cur.fetchone()
-        if result is not None:
-            WebDriverWait(driver, wait) \
-                .until(EC.visibility_of_element_located((By.XPATH, result[0])))
 
 
 def upload_file(mss_no, path, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     mypath = os.path.join(root_folder, mss_no)
-    onlyfiles = [abspath(f) for f in listdir(mypath) if isfile(join(mypath, f))]
-    for j in onlyfiles:
-        WebDriverWait(driver, wait) \
-            .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(j)
+    onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
+    try:
+        for j in onlyfiles:
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(j)
+    except ElementNotInteractableException:
+        for j in onlyfiles:
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, path))).click()
+            pyautogui.write(j)
+            pyautogui.press('enter')
+            pass
+
 
 
 def select_option(data, path_type, path, **kwargs):
