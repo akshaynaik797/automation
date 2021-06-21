@@ -471,22 +471,6 @@ class FillPortal:
                     status = 'fail'
                     log_exceptions(row=i)
                     dialog(value=value, step=step, status=status, message=message)
-            if i['is_input'] == 'W':
-                path_type, path_value = i['path_type'], i['path_value']
-                try:
-                    tmp_window = driver.current_window_handle
-                    for window in driver.window_handles:
-                        tmp_window = window
-                    driver.switch_to.window(tmp_window)
-                    status = 'pass'
-                except TimeoutException:
-                    log_exceptions(row=i)
-                    status = 'fail with timeout'
-                    dialog(value=value, step=step, status=status, message=message)
-                except:
-                    status = 'fail'
-                    log_exceptions(row=i)
-                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'code':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
