@@ -166,8 +166,8 @@ class FillPortal:
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.login_records:
-            if status == 'fail':
-                break
+            # if status == 'fail':
+            #     break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -232,8 +232,8 @@ class FillPortal:
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.logout_records:
-            if status == 'fail':
-                break
+            # if status == 'fail':
+            #     break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -290,8 +290,8 @@ class FillPortal:
         if 'driver' in kwargs:
             driver = kwargs['driver']
         for i in self.home_records:
-            if status == 'fail':
-                break
+            # if status == 'fail':
+            #     break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -346,8 +346,9 @@ class FillPortal:
             driver = kwargs['driver']
         i_value = None
         for i in self.records:
-            if status == 'fail':
-                break
+            #commented to excute after excepetion
+            # if status == 'fail':
+            #     break
             value = i['value']
             message = i['field']
             step = i['step']
@@ -488,7 +489,7 @@ class FillPortal:
                     status = 'fail'
                     log_exceptions(row=i)
                     dialog(value=value, step=step, status=status, message=message)
-            if i['is_input'] == 'CODE':
+            if i['is_input'] == 'code':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
                     exec_code(value, path_value, driver=driver, data=self.data)
@@ -536,14 +537,16 @@ def run(**kwargs):
     except:
         make_log.log_exceptions(data=kwargs)
     finally:
+        #dialog only ok btn
+        submit_dialog()
         driver.quit()
         if os.path.exists(root_folder):
             remove_tree(root_folder)
     return response
 
 def dialog(step, message, value, status, **kwargs):
-    msg = f'Do you want to run further or cancel the script?\nstep={step}\nstatus={status}' \
-          f'\nmessage={message}\nvalue={value}'
+    msg = f'Do you want to run further or cancel the script?\nstep= {step}\nstatus= {status}' \
+          f'\nmessage= {message}\nvalue= {value}'
     root = tk.Tk()
     root.withdraw()
     tmp = messagebox.askokcancel(title=None, message=msg, icon='error')
@@ -552,11 +555,21 @@ def dialog(step, message, value, status, **kwargs):
         return tmp
     exit()
 
+def submit_dialog():
+    msg = "Window closing, Submit!"
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showinfo(title=None, message=msg, icon='error')
+    root.update()
+
+
 def exec_code(value, path_value, **kwargs):
     data = kwargs['data']
     if 'driver' in kwargs:
         driver = kwargs['driver']
     if path_value == 'code_upload_preauth_icici':
+        code_upload_preauth_icici(data, **kwargs)
+    if path_value == 'code_upload_preauth_fhpl':
         code_upload_preauth_icici(data, **kwargs)
     if path_value == 'code_calendar_preauth_icici':
         code_calendar_preauth_icici(path_value, value, **kwargs)
@@ -898,4 +911,5 @@ def download_file(url):
         return os.path.abspath(attachments_folder + '/' + os.path.basename(a.path))
 
 if __name__ == '__main__':
-    run(mss_no='NH-1004657', hosp_id='8900080123380')
+    submit_dialog()
+    run(mss_no='NH-1004693', hosp_id='8900080123380')
