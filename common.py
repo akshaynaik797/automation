@@ -560,7 +560,6 @@ def submit_dialog():
     messagebox.showinfo(title=None, message=msg, icon='error')
     root.update()
 
-
 def exec_code(value, path_value, **kwargs):
     data = kwargs['data']
     if 'driver' in kwargs:
@@ -571,7 +570,6 @@ def exec_code(value, path_value, **kwargs):
         code_upload_preauth_fhpl(data, driver=driver)
     if path_value == 'code_calendar_preauth_icici':
         code_calendar_preauth_icici(path_value, value, driver=driver)
-
 
 def upload_file(mss_no, path, **kwargs):
     if 'driver' in kwargs:
