@@ -441,19 +441,6 @@ class FillPortal:
                     status = 'fail'
                     log_exceptions(row=i)
                     dialog(value=value, step=step, status=status, message=message)
-            if i['is_input'] == 'F':
-                path_type, path_value = i['path_type'], i['path_value']
-                try:
-                    upload_file(self.mss_no, path_value, driver=driver)
-                    status = 'pass'
-                except TimeoutException:
-                    log_exceptions(row=i)
-                    status = 'fail with timeout'
-                    dialog(value=value, step=step, status=status, message=message)
-                except:
-                    status = 'fail'
-                    log_exceptions(row=i)
-                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'LIST':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
