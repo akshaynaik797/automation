@@ -2,6 +2,7 @@ import os
 import random
 from datetime import datetime
 from distutils.dir_util import remove_tree
+from itertools import zip_longest
 from os import listdir
 from os.path import abspath, isfile, join
 from pathlib import Path
@@ -461,9 +462,6 @@ class FillPortal:
                         upload_file(self.mss_no, path_value, driver=driver)
                     else:
                         select_option(value, path_type, path_value, driver=driver)
-                    if path_type == 'code' and path_value == 'code_upload_icici':
-                        code_upload_preauth_icici(self.data, driver=driver)
-
                     status = 'pass'
                 except TimeoutException:
                     log_exceptions(row=i)
@@ -568,23 +566,58 @@ def exec_code(value, path_value, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     if path_value == 'code_upload_preauth_icici':
-        code_upload_preauth_icici(data, **kwargs)
+        code_upload_preauth_icici(data, driver=driver)
     if path_value == 'code_upload_preauth_fhpl':
-        code_upload_preauth_icici(data, **kwargs)
+        code_upload_preauth_fhpl(data, driver=driver)
     if path_value == 'code_calendar_preauth_icici':
-        code_calendar_preauth_icici(path_value, value, **kwargs)
+        code_calendar_preauth_icici(path_value, value, driver=driver)
+
+
+def upload_file(mss_no, path, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    mypath = os.path.join(root_folder, mss_no)
+    onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
+    try:
+        for j in onlyfiles:
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(j)
+    except ElementNotInteractableException:
+        for j in onlyfiles:
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, path))).click()
+            pyautogui.write(j)
+            pyautogui.press('enter')
+            pass
+
+def code_upload_preauth_fhpl(data, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    mss_no = data['0']['RefNo']
+    xpath_list = ['//*[@id="fupreauthForm"]', '//*[@id="fuPatientIDProof"]', '//*[@id="fuInvestigationFile"]']
+    btn_list = ['//*[@id="ContentPlaceHolder1_TabContainer1_tbAddDocuments_btnPreauthForm"]',
+                '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddDocuments_btnPatienIDProof"]',
+                '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddDocuments_btnInvestigationFile"]']
+    mypath = os.path.join(root_folder, mss_no)
+    onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
+    for file_btn, upload_btn, fpath in zip_longest(xpath_list, btn_list, onlyfiles, fillvalue=onlyfiles[-1]):
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, file_btn))).send_keys(fpath)
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, upload_btn))).click()
 
 def code_upload_preauth_icici(data, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
-    refno = data['0']['RefNo']
+    mss_no = data['0']['RefNo']
+    mypath = os.path.join(root_folder, mss_no)
+    onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
     lastdocs = data['0']['Lastdoc']
     lenth = len(lastdocs)
     cnt = 2
     add_more = '//*[@id="table-bottom"]/div[3]/input'
-    for i, row in enumerate(lastdocs):
+    for fp in onlyfiles:
         option, button = f'//*[@id="ddlDocumentType{cnt}"]/option[14]', f'//*[@id="btnBrowse{cnt}"]'
-        fp = download_file1(row['Doc'], refno)
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, option))).click()
         WebDriverWait(driver, wait) \
@@ -911,5 +944,4 @@ def download_file(url):
         return os.path.abspath(attachments_folder + '/' + os.path.basename(a.path))
 
 if __name__ == '__main__':
-    submit_dialog()
     run(mss_no='NH-1004693', hosp_id='8900080123380')
