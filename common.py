@@ -535,7 +535,6 @@ def run(**kwargs):
     except:
         make_log.log_exceptions(data=kwargs)
     finally:
-        #dialog only ok btn
         submit_dialog()
         driver.quit()
         if os.path.exists(root_folder):
