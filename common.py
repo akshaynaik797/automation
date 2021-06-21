@@ -7,6 +7,8 @@ from os.path import abspath, isfile, join
 from pathlib import Path
 from time import sleep
 from urllib.parse import urlparse
+import tkinter as tk
+from tkinter import messagebox
 
 import mysql.connector
 import pyautogui as pyautogui
@@ -16,11 +18,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium import webdriver
 
+import make_log
 from make_log import log_exceptions, custom_log_data
 from settings import WAIT_PERIOD, attachments_folder
 from settings import conn_data, logs_folder, grouping_data_api, \
-    update_hospitaltlog_api, screenshot_folder, screenshot_url, root_folder, setportalfieldvalues_api
+    update_hospitaltlog_api, screenshot_folder, root_folder, setportalfieldvalues_api, \
+    WEBDRIVER_FOLDER_PATH, chrome_options
 
 wait = int(WAIT_PERIOD)
 
@@ -28,7 +33,6 @@ if not os.path.exists(logs_folder):
     os.mkdir(logs_folder)
 if not os.path.exists(screenshot_folder):
     os.mkdir(screenshot_folder)
-
 
 class FillPortal:
     def __init__(self, mss_no, hosp_id):
@@ -109,7 +113,8 @@ class FillPortal:
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
-            custom_log_data(mss_no=self.mss_no, status=self.status, records=self.data['db_data'], filename="records_db")
+            self.status = 'PreAuth - Sent To TPA/ Insurer'
+            # custom_log_data(mss_no=self.mss_no, status=self.status, records=self.data['db_data'], filename="records_db")
             for i in self.data['db_data']:
                 if i['process'] == 'login':
                     self.login_records.append(i)
@@ -147,11 +152,12 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message='visit portal failed')
                 filename = f"{random.randint(99999, 999999)}.png"
                 sleep(1)
                 driver.save_screenshot(screenshot_folder + '/' + filename)
                 insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], "visit_portal", step,
-                           status, message, screenshot_url + filename, value)
+                           status, message, filename, value)
                 return driver.current_url
         return None
 
@@ -176,9 +182,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'C':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -190,9 +198,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
 
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -202,15 +212,17 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             filename = f"{random.randint(99999, 999999)}.png"
             sleep(1)
             driver.save_screenshot(screenshot_folder + '/' + filename)
             insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
                        step,
-                       status, message, screenshot_url + filename, value)
+                       status, message, filename, value)
         if status == 'fail':
             return False
         return True
@@ -235,6 +247,7 @@ class FillPortal:
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -243,9 +256,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -254,15 +269,17 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             filename = f"{random.randint(99999, 999999)}.png"
             sleep(1)
             driver.save_screenshot(screenshot_folder + '/' + filename)
             insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
                        step,
-                       status, message, screenshot_url + filename, value)
+                       status, message, filename, value)
         if status == 'fail':
             return False
         return True
@@ -293,9 +310,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
 
             if i['is_input'] == 'B':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -305,15 +324,17 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             filename = f"{random.randint(99999, 999999)}.png"
             sleep(1)
             driver.save_screenshot(screenshot_folder + '/' + filename)
             insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
                        step,
-                       status, message, screenshot_url + filename, value)
+                       status, message, filename, value)
         if status == 'fail':
             return False
         return True
@@ -345,9 +366,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'I':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -356,9 +379,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
 
             if i['is_input'] == 'B' or i['is_input'] == 'LINK':
                 path_type, path_value = i['path_type'], i['path_value']
@@ -383,9 +408,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'S':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -394,9 +421,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'RB':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -405,9 +434,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'F':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -416,9 +447,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'LIST':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -434,9 +467,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'W':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -448,9 +483,11 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'CODE':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -458,18 +495,62 @@ class FillPortal:
                 except TimeoutException:
                     log_exceptions(row=i)
                     status = 'fail with timeout'
+                    dialog(value=value, step=step, status=status, message=message)
                 except:
                     status = 'fail'
                     log_exceptions(row=i)
+                    dialog(value=value, step=step, status=status, message=message)
             filename = f"{random.randint(99999, 999999)}.png"
             sleep(1)
             driver.save_screenshot(screenshot_folder + '/' + filename)
             insert_log('', self.transaction_id, self.mss_no, self.data['0']['InsurerID'], self.data['0']['Currentstatus'],
                        step,
-                       status, message, screenshot_url + filename, value)
+                       status, message, filename, value)
         if status == 'fail':
             return False
         return True
+
+def run(**kwargs):
+    response, step = {}, ""
+    driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
+    try:
+        portal = FillPortal(kwargs['mss_no'], kwargs['hosp_id'])
+        z = portal.visit_portal(driver=driver)
+        if z is None or z == 'data:,':
+            step = "portal check"
+            custom_log_data(filename='failed_portal', mssno=portal.mss_no, porta_link=portal.data['0']['PortalLink'])
+            response = {'error': "see logs", "step": step}
+        else:
+            step = "login"
+            if portal.login(driver=driver):
+                step = "home"
+                driver.refresh()
+                if portal.home(driver=driver):
+                    step = "execution"
+                    if portal.execute(driver=driver):
+                        response = {'msg': 'success'}
+            else:
+                response = {'error': "see logs", "step": step}
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    except:
+        make_log.log_exceptions(data=kwargs)
+    finally:
+        driver.quit()
+        if os.path.exists(root_folder):
+            remove_tree(root_folder)
+    return response
+
+def dialog(step, message, value, status, **kwargs):
+    msg = f'Do you want to run further or cancel the script?\nstep={step}\nstatus={status}' \
+          f'\nmessage={message}\nvalue={value}'
+    root = tk.Tk()
+    root.withdraw()
+    tmp = messagebox.askokcancel(title=None, message=msg, icon='error')
+    root.update()
+    if tmp:
+        return tmp
+    exit()
 
 def exec_code(value, path_value, **kwargs):
     data = kwargs['data']
@@ -479,8 +560,6 @@ def exec_code(value, path_value, **kwargs):
         code_upload_preauth_icici(data, **kwargs)
     if path_value == 'code_calendar_preauth_icici':
         code_calendar_preauth_icici(path_value, value, **kwargs)
-
-
 
 def code_upload_preauth_icici(data, **kwargs):
     if 'driver' in kwargs:
@@ -501,8 +580,6 @@ def code_upload_preauth_icici(data, **kwargs):
             WebDriverWait(driver, wait) \
                 .until(EC.visibility_of_element_located((By.XPATH, add_more))).click()
         cnt = cnt + 1
-
-
 
 def code_calendar_mb(xpath, value, **kwargs):
     #format to submit is 28-Feb-2021
@@ -594,7 +671,6 @@ def code_calendar_preauth_star(xpath, value, field, **kwargs):
         log_exceptions()
         return False
 
-
 def insert_log(tab_id, transactionid, referenceno, insurer, process, step, status, message, url, api_value):
     try:
         data = (tab_id, transactionid, referenceno, insurer, process, step, status, message, url, api_value)
@@ -610,7 +686,6 @@ def insert_log(tab_id, transactionid, referenceno, insurer, process, step, statu
         log_exceptions()
         return False
 
-
 def check_portal(link):
     try:
         response = requests.get(link)
@@ -620,7 +695,6 @@ def check_portal(link):
         return False
     except:
         return False
-
 
 def get_data_from_mssno_api(mssno):
     try:
@@ -633,7 +707,6 @@ def get_data_from_mssno_api(mssno):
                 return {'error': 'invalid mssno'}
     except requests.exceptions.ConnectionError:
         return {'error': 'mssno api server down'}
-
 
 def get_data_from_db(insurer_id):
     fields = (
@@ -651,7 +724,6 @@ def get_data_from_db(insurer_id):
             records.append(row)
     return records
 
-
 def visit_portal(link, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
@@ -659,7 +731,6 @@ def visit_portal(link, **kwargs):
         driver.get(link)
         return True
     return False
-
 
 def fill_input(data, path_type, path, **kwargs):
     if 'driver' in kwargs:
@@ -683,7 +754,6 @@ def get_input(data, path_type, path, **kwargs):
             .until(EC.visibility_of_element_located((By.XPATH, path)))
         value = element.get_attribute("value")
         return value
-
 
 def search_and_click(path_type, path, path_row, **kwargs):
     wait = 5
@@ -709,14 +779,12 @@ def search_and_click(path_type, path, path_row, **kwargs):
         except:
             log_exceptions()
 
-
 def press_radio_button(path_type, path, path_row, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
-
 
 def press_button(path_type, path, path_row, **kwargs):
     if 'driver' in kwargs:
@@ -725,7 +793,6 @@ def press_button(path_type, path, path_row, **kwargs):
     if path_type == 'xpath':
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
-
 
 def upload_file(mss_no, path, **kwargs):
     if 'driver' in kwargs:
@@ -744,15 +811,12 @@ def upload_file(mss_no, path, **kwargs):
             pyautogui.press('enter')
             pass
 
-
-
 def select_option(data, path_type, path, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     select = Select(WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, path))))
     select.select_by_visible_text(data)
     pass
-
 
 def grouping_ins_hosp():
     url = grouping_data_api
@@ -799,7 +863,6 @@ def grouping_ins_hosp():
                         pass
     return processed1
 
-
 def update_hospitaltlog(**kwargs):
     fields = 'fStatus', 'fLock', 'Type_Ref'
     url = update_hospitaltlog_api
@@ -833,3 +896,6 @@ def download_file(url):
         # write to file
         file.write(response.content)
         return os.path.abspath(attachments_folder + '/' + os.path.basename(a.path))
+
+if __name__ == '__main__':
+    run(mss_no='NH-1004657', hosp_id='8900080123380')
