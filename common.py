@@ -36,7 +36,7 @@ if not os.path.exists(screenshot_folder):
     os.mkdir(screenshot_folder)
 
 class FillPortal:
-    def __init__(self, mss_no, hosp_id):
+    def __init__(self, mss_no, hosp_id, **kwargs):
         self.mss_no = mss_no
         self.hosp_id = hosp_id
         self.data = dict()
@@ -114,7 +114,8 @@ class FillPortal:
                     records.append(row)
             self.data['db_data'] = records
             self.status = self.data['0']['Currentstatus']
-            self.status = 'PreAuth - Sent To TPA/ Insurer'
+            if 'status' in kwargs:
+                self.status = kwargs['status']
             # custom_log_data(mss_no=self.mss_no, status=self.status, records=self.data['db_data'], filename="records_db")
             for i in self.data['db_data']:
                 if i['process'] == 'login':
@@ -441,19 +442,6 @@ class FillPortal:
                     status = 'fail'
                     log_exceptions(row=i)
                     dialog(value=value, step=step, status=status, message=message)
-            if i['is_input'] == 'F':
-                path_type, path_value = i['path_type'], i['path_value']
-                try:
-                    upload_file(self.mss_no, path_value, driver=driver)
-                    status = 'pass'
-                except TimeoutException:
-                    log_exceptions(row=i)
-                    status = 'fail with timeout'
-                    dialog(value=value, step=step, status=status, message=message)
-                except:
-                    status = 'fail'
-                    log_exceptions(row=i)
-                    dialog(value=value, step=step, status=status, message=message)
             if i['is_input'] == 'LIST':
                 path_type, path_value = i['path_type'], i['path_value']
                 try:
@@ -462,22 +450,6 @@ class FillPortal:
                         upload_file(self.mss_no, path_value, driver=driver)
                     else:
                         select_option(value, path_type, path_value, driver=driver)
-                    status = 'pass'
-                except TimeoutException:
-                    log_exceptions(row=i)
-                    status = 'fail with timeout'
-                    dialog(value=value, step=step, status=status, message=message)
-                except:
-                    status = 'fail'
-                    log_exceptions(row=i)
-                    dialog(value=value, step=step, status=status, message=message)
-            if i['is_input'] == 'W':
-                path_type, path_value = i['path_type'], i['path_value']
-                try:
-                    tmp_window = driver.current_window_handle
-                    for window in driver.window_handles:
-                        tmp_window = window
-                    driver.switch_to.window(tmp_window)
                     status = 'pass'
                 except TimeoutException:
                     log_exceptions(row=i)
@@ -511,9 +483,12 @@ class FillPortal:
 
 def run(**kwargs):
     response, step = {}, ""
-    driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
     try:
-        portal = FillPortal(kwargs['mss_no'], kwargs['hosp_id'])
+        if kwargs['status'] != 'None':
+            portal = FillPortal(kwargs['mss_no'], kwargs['hosp_id'], status=kwargs['status'])
+        else:
+            portal = FillPortal(kwargs['mss_no'], kwargs['hosp_id'])
+        driver = webdriver.Chrome(WEBDRIVER_FOLDER_PATH, options=chrome_options)
         z = portal.visit_portal(driver=driver)
         if z is None or z == 'data:,':
             step = "portal check"
@@ -535,7 +510,6 @@ def run(**kwargs):
     except:
         make_log.log_exceptions(data=kwargs)
     finally:
-        #dialog only ok btn
         submit_dialog()
         driver.quit()
         if os.path.exists(root_folder):
