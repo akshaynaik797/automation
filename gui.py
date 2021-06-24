@@ -13,8 +13,10 @@ mssno_entry = Entry(mygui, textvariable=mssno).grid(row=1, column=1, pady=15)
 
 hosp_id = StringVar()
 hosp_id_label = Label(mygui, text="Hospital ID", width=10).grid(row=1, column=2)
-hosp_id_entry = Entry(mygui, textvariable=hosp_id).grid(row=1, column=3)
-hosp_id.set("8900080123380")
+hosp_id_list = ttk.Combobox(mygui, width=20, textvariable=hosp_id)
+hosp_id_list['values'] = ('noble',)
+hosp_id_list.grid(row=1, column=3)
+hosp_id_list.current(0)
 
 status = StringVar()
 Label(mygui, text="Current Status", width=14).grid(row=1, column=4)
@@ -26,7 +28,8 @@ status_list.grid(row=1, column=5)
 status_list.current(0)
 
 def send_values():
-    run(mss_no=mssno.get(), hosp_id=hosp_id.get(), status=status.get())
+    hosp_map_dict = {'noble': '8900080123380'}
+    run(mss_no=mssno.get(), hosp_id=hosp_map_dict[hosp_id.get()], status=status.get())
 
 loginButton = Button(mygui, text="Process", command=send_values).grid(row=2, column=1)
 closeButton = Button(mygui, text="Close", command=mygui.destroy).grid(row=2, column=2)
