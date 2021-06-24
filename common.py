@@ -540,7 +540,7 @@ def exec_code(value, path_value, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     if path_value == 'code_patient_details_preauth_icici':
-        code_patient_details_preauth_icici(data, driver=driver)
+        code_patient_details_preauth_star(data, driver=driver)
     if path_value == 'code_upload_preauth_icici':
         code_upload_preauth_icici(data, driver=driver)
     if path_value == 'code_upload_preauth_fhpl':
@@ -617,7 +617,7 @@ def code_upload_query_fhpl(data, **kwargs):
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, add_btn))).click()
 
-def code_patient_details_preauth_icici(data, **kwargs):
+def code_patient_details_preauth_star(data, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     if data['0']['seltype'] == 'HealthCardNo':
