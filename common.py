@@ -576,6 +576,8 @@ def code_upload_preauth_fhpl(data, **kwargs):
                 '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddDocuments_btnInvestigationFile"]']
     mypath = os.path.join(root_folder, mss_no)
     onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
+    if len(onlyfiles) == 1:
+        onlyfiles = onlyfiles * 3
     for file_btn, upload_btn, fpath in zip_longest(xpath_list, btn_list, onlyfiles, fillvalue=onlyfiles[-1]):
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, file_btn))).send_keys(fpath)
