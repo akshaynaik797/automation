@@ -544,6 +544,8 @@ def exec_code(value, path_value, **kwargs):
         code_upload_preauth_fhpl(data, driver=driver)
     if path_value == 'code_upload_enhance_fhpl':
         code_upload_enhance_fhpl(data, driver=driver)
+    if path_value == 'code_upload_query_fhpl':
+        code_upload_query_fhpl(data, driver=driver)
     if path_value == 'code_calendar_preauth_icici':
         code_calendar_preauth_icici(path_value, value, driver=driver)
 
@@ -593,6 +595,22 @@ def code_upload_enhance_fhpl(data, **kwargs):
             .until(EC.visibility_of_element_located((By.XPATH, file_input))).send_keys(fpath)
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, add_btn))).click()
+
+def code_upload_query_fhpl(data, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    mss_no = data['0']['RefNo']
+    #file_input = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_pnlFiles"]'
+    file_input, add_btn = '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddFiles_MultipleFileUpload1_fuUpload"]', \
+                          '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddFiles_MultipleFileUpload1_btnAdd"]'
+    mypath = os.path.join(root_folder, mss_no)
+    onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
+    for fpath in onlyfiles:
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, file_input))).send_keys(fpath)
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, add_btn))).click()
+
 
 def code_upload_preauth_icici(data, **kwargs):
     if 'driver' in kwargs:
