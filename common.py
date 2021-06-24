@@ -539,6 +539,8 @@ def exec_code(value, path_value, **kwargs):
     data = kwargs['data']
     if 'driver' in kwargs:
         driver = kwargs['driver']
+    if path_value == 'code_patient_details_preauth_icici':
+        code_patient_details_preauth_icici(data, driver=driver)
     if path_value == 'code_upload_preauth_icici':
         code_upload_preauth_icici(data, driver=driver)
     if path_value == 'code_upload_preauth_fhpl':
@@ -614,6 +616,21 @@ def code_upload_query_fhpl(data, **kwargs):
             .until(EC.visibility_of_element_located((By.XPATH, file_input))).send_keys(fpath)
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, add_btn))).click()
+
+def code_patient_details_preauth_icici(data, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    if data['0']['seltype'] == 'HealthCardNo':
+        #fill hid card and pname
+        tmp = '//*[@id="tabclaim-new"]/div[4]/h4/div/div/label[1]/input'
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, tmp))).click()
+        tmp = '//*[@id="tabclaim-new"]/div[4]/form/div/div[1]/input'
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, tmp))).send_keys(data['0']['insid'])
+        tmp = '//*[@id="tabclaim-new"]/div[4]/form/div/div[2]/input'
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, tmp))).send_keys(data['0']['PatientName'])
 
 
 def code_upload_preauth_icici(data, **kwargs):
