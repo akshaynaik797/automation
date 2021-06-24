@@ -605,10 +605,8 @@ def code_upload_query_fhpl(data, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     mss_no = data['0']['RefNo']
-    #file_input = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_pnlFiles"]'
-    #file_input = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_fuUpload"]'
     file_input, add_btn = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_fuUpload"]', \
-                          '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddFiles_MultipleFileUpload1_btnAdd"]'
+                          '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_btnAdd"]'
     mypath = os.path.join(root_folder, mss_no)
     onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
     for fpath in onlyfiles:
