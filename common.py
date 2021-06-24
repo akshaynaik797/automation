@@ -15,6 +15,7 @@ import mysql.connector
 import pyautogui as pyautogui
 import requests
 from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
+from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
@@ -578,11 +579,13 @@ def code_upload_preauth_fhpl(data, **kwargs):
     onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
     if len(onlyfiles) == 1:
         onlyfiles = onlyfiles * 3
-    for file_btn, upload_btn, fpath in zip_longest(xpath_list, btn_list, onlyfiles, fillvalue=onlyfiles[-1]):
+    for file_btn, upload_btn, fpath in zip(xpath_list, btn_list, onlyfiles):
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, file_btn))).send_keys(fpath)
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, upload_btn))).click()
+        alert = Alert(driver)
+        alert.accept()
 
 def code_upload_enhance_fhpl(data, **kwargs):
     if 'driver' in kwargs:
@@ -603,7 +606,8 @@ def code_upload_query_fhpl(data, **kwargs):
         driver = kwargs['driver']
     mss_no = data['0']['RefNo']
     #file_input = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_pnlFiles"]'
-    file_input, add_btn = '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddFiles_MultipleFileUpload1_fuUpload"]', \
+    #file_input = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_fuUpload"]'
+    file_input, add_btn = '//*[@id="ContentPlaceHolder1_MultipleFileUpload1_fuUpload"]', \
                           '//*[@id="ContentPlaceHolder1_TabContainer1_tbAddFiles_MultipleFileUpload1_btnAdd"]'
     mypath = os.path.join(root_folder, mss_no)
     onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
@@ -790,14 +794,9 @@ def fill_input(data, path_type, path, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
     if path_type == 'xpath':
-        for i in range(2):
-            element = WebDriverWait(driver, wait) \
-                .until(EC.visibility_of_element_located((By.XPATH, path)))
-            element.send_keys(data)
-            value = element.get_attribute("value")
-            if value == data:
-                break
-        pass
+        element = WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, path)))
+        element.send_keys(data)
 
 def get_input(data, path_type, path, **kwargs):
     value = None
