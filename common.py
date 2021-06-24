@@ -632,6 +632,34 @@ def code_patient_details_preauth_star(data, **kwargs):
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, tmp))).send_keys(data['0']['PatientName'])
 
+def code_case_details_preauth_icici(data, **kwargs):
+    if 'driver' in kwargs:
+        driver = kwargs['driver']
+    #if 0:treatment_type = 'medical'
+    if data['0']['insid'] != 'Surgical Management':
+        tmp = "//input[@id='Radio_Treatment_Medical']"
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, tmp))).click()
+        tmp = "//input[@id='ddlDiagnosis_Type']"
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, tmp))).send_keys('Others/Other Diseases')
+    #if 0:treatment_type = 'Surgical'
+    if data['0']['insid'] == 'Surgical Management':
+        tmp = "//input[@id='Radio_Treatment_Surgical']"
+        WebDriverWait(driver, wait) \
+            .until(EC.visibility_of_element_located((By.XPATH, tmp))).click()
+        if data['0']['procedures'] == 'Single':
+            tmp = "//input[@id='Radio_Procedure_Single']"
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, tmp))).click()
+        if data['0']['procedures'] == 'Multiple':
+            tmp = "//input[@id='Radio_Procedure_Multiple']"
+            WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, tmp))).click()
+        tmp = "//select[@id='ddlDisease_Type']"
+        select = Select(WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, tmp))))
+        select.select_by_visible_text(data['0']['procedures_type'])
+
 
 def code_upload_preauth_icici(data, **kwargs):
     if 'driver' in kwargs:
