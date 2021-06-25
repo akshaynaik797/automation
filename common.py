@@ -68,7 +68,7 @@ class FillPortal:
                 download_file1(i['Doc'], self.mss_no)
             fields = (
                 'insurer', 'process', 'field', 'is_input', 'path_type', 'path_value', 'api_field',
-                'default_value', 'step', 'seq', 'relation', 'flag')
+                'default_value', 'step', 'seq', 'relation', 'flag', 'sno')
             with mysql.connector.connect(**conn_data) as con:
                 cur = con.cursor()
                 query = "SELECT * FROM paths where insurer = %s and (seq is not Null or seq != '') order by seq"
@@ -127,6 +127,7 @@ class FillPortal:
                     self.home_records.append(i)
                 if i['process'].strip() in self.status:
                     self.records.append(i)
+            self.records = handle_dynamic(self.records)
 
     def get_api_field(self, api_field):
         if api_field != '':
@@ -551,6 +552,38 @@ def exec_code(value, path_value, **kwargs):
         code_upload_query_fhpl(data, driver=driver)
     if path_value == 'code_calendar_preauth_icici':
         code_calendar_preauth_icici(path_value, value, driver=driver)
+
+def handle_dynamic(records):
+    tmp_dict = {}
+    for row in records:
+        if row['seq'] in tmp_dict:
+            tmp_dict[row['seq']]['seq'] += 1
+            tmp = {'value': row['value'], 'def_value': row['default_value'], 'rel': row['relation'], 'sno': row['sno']}
+            tmp_dict[row['seq']]['params'].append(tmp)
+        else:
+            tmp = {'seq': 1, "params": [{'value': row['value'], 'def_value': row['default_value'], 'rel': row['relation'], 'sno': row['sno']}]}
+            tmp_dict[row['seq']] = tmp
+    rows = []
+    for row in tmp_dict:
+        row = tmp_dict[row]
+        if row['seq'] > 1:
+            rows.append(row)
+    delete_rows = {'sno': set(), 'rel': set(), 'seq': set()}
+    for row in rows:
+        for i in row['params']:
+            if i['value'] != i['def_value']:
+                delete_rows['seq'].add(row['seq']), delete_rows['rel'].add(i['rel']), delete_rows['sno'].add(i['sno'])
+    tmp = []
+    for row in records:
+        if row['sno'] in delete_rows['sno']:
+            tmp.append(row)
+        for rel in delete_rows['rel']:
+            if rel in str(row['seq']):
+                tmp.append(row)
+    for i in tmp:
+        records.remove(i)
+    return records
+
 
 def upload_file(mss_no, path, **kwargs):
     if 'driver' in kwargs:
@@ -994,4 +1027,5 @@ def download_file(url):
         return os.path.abspath(attachments_folder + '/' + os.path.basename(a.path))
 
 if __name__ == '__main__':
-    run(mss_no='NH-1004598', hosp_id='8900080123380')
+    #NH-1004663 icici  NH-1004728 star
+    run(mss_no='NH-1004728', hosp_id='8900080123380', status='PreAuth - Sent To TPA/ Insurer')
