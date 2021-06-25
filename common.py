@@ -97,8 +97,8 @@ class FillPortal:
                                         log_exceptions()
                                         temp = ''
                                 if isinstance(temp, str):
-                                    value += temp.strip()
-                            row['value'] = value
+                                    value += temp.strip() + ','
+                            row['value'] = value.strip(',')
                         elif ':' in tmp:
                             temp = self.data
                             for j in tmp.split(':'):
@@ -552,6 +552,8 @@ def exec_code(value, path_value, **kwargs):
         code_upload_query_fhpl(data, driver=driver)
     if path_value == 'code_calendar_preauth_icici':
         code_calendar_preauth_icici(path_value, value, driver=driver)
+    if path_value == 'code_calendar_preauth_star':
+        code_calendar_preauth_star(value, driver=driver)
 
 def handle_dynamic(records):
     tmp_dict = {}
@@ -775,35 +777,27 @@ def code_calendar_hdfc_admn(xpath, value, **kwargs):
         log_exceptions()
         return False
 
-def code_calendar_preauth_star(xpath, value, field, **kwargs):
+def code_calendar_preauth_star(value, **kwargs):
     #format to submit is 28-Feb-2021 12:14:15
     if 'driver' in kwargs:
         driver = kwargs['driver']
-    if field == 'doa':
-        no = '2'
-    else:
-        no = 4
-    time = datetime.strptime('%d/%b/%Y %H:%M:%S', value).strftime('%d/%b/%Y %H:%M:%p')
-    time = time.split(' ')[-1]
-    date = datetime.strptime('%d-%B-%Y %H:%M:%S', value)
-    h, m, p = time.split(':')
-    ampm = f'//*[@id="myForm"]/div[{no}]/div[2]/div/div/table/tbody/tr[2]/td[6]/button'
-    mm = f'//*[@id="myForm"]/div[2]/div[{no}]/div/div/table/tbody/tr[2]/td[3]/input'
-    hh = f'//*[@id="myForm"]/div[2]/div[{no}]/div/div/table/tbody/tr[2]/td[1]/input'
-    try:
-        element = WebDriverWait(driver, wait) \
-            .until(EC.visibility_of_element_located((By.XPATH, xpath)))
-        driver.execute_script('arguments[0].removeAttribute("readonly")', element)
-        element.clear()
-        element.send_keys(date)
-        WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, mm))).send_keys(m)
-        WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, hh))).send_keys(h)
-        if p == 'PM':
+    tmp_list = [['//*[@id="datetimepicker"]', '2', 2, value.split(',')[0]], ['//*[@id="dischargetimepicker"]', 4, 4, value.split(',')[1]]]
+    for xpath, no, no1, value in tmp_list:
+        date = datetime.strptime(value, '%d/%m/%Y').strftime('%d-%b-%Y')
+        ampm = f'//*[@id="myForm"]/div[2]/div[{no1}]/div/div/table/tbody/tr[2]/td[6]/button'
+        mm = f'//*[@id="myForm"]/div[2]/div[{no}]/div/div/table/tbody/tr[2]/td[3]/input'
+        hh = f'//*[@id="myForm"]/div[2]/div[{no}]/div/div/table/tbody/tr[2]/td[1]/input'
+        try:
+            element = WebDriverWait(driver, wait) \
+                .until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            driver.execute_script('arguments[0].removeAttribute("readonly")', element)
+            element.clear()
+            element.send_keys(date)
+            WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, mm))).send_keys('12')
+            WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, hh))).send_keys('12')
             WebDriverWait(driver, wait).until(EC.visibility_of_element_located((By.XPATH, ampm))).click()
-        return True
-    except:
-        log_exceptions()
-        return False
+        except:
+            log_exceptions()
 
 def insert_log(tab_id, transactionid, referenceno, insurer, process, step, status, message, url, api_value):
     try:
