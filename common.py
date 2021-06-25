@@ -917,23 +917,6 @@ def press_button(path_type, path, path_row, **kwargs):
         WebDriverWait(driver, wait) \
             .until(EC.visibility_of_element_located((By.XPATH, path))).click()
 
-def upload_file(mss_no, path, **kwargs):
-    if 'driver' in kwargs:
-        driver = kwargs['driver']
-    mypath = os.path.join(root_folder, mss_no)
-    onlyfiles = [abspath(join(mypath, f)) for f in listdir(mypath) if isfile(join(mypath, f))]
-    try:
-        for j in onlyfiles:
-            WebDriverWait(driver, wait) \
-                .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(j)
-    except ElementNotInteractableException:
-        for j in onlyfiles:
-            WebDriverWait(driver, wait) \
-                .until(EC.visibility_of_element_located((By.XPATH, path))).click()
-            pyautogui.write(j)
-            pyautogui.press('enter')
-            pass
-
 def select_option(data, path_type, path, **kwargs):
     if 'driver' in kwargs:
         driver = kwargs['driver']
