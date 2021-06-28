@@ -596,7 +596,7 @@ def upload_file(mss_no, path, **kwargs):
         for j in onlyfiles:
             WebDriverWait(driver, wait) \
                 .until(EC.visibility_of_element_located((By.XPATH, path))).send_keys(j)
-    except ElementNotInteractableException:
+    except (ElementNotInteractableException, TimeoutException):
         for j in onlyfiles:
             WebDriverWait(driver, wait) \
                 .until(EC.visibility_of_element_located((By.XPATH, path))).click()
