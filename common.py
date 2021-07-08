@@ -583,7 +583,8 @@ def handle_dynamic(records):
             if rel in str(row['seq']):
                 tmp.append(row)
     for i in tmp:
-        records.remove(i)
+        if i in records:
+            records.remove(i)
     return records
 
 
@@ -1005,4 +1006,4 @@ def download_file(url):
 
 if __name__ == '__main__':
     #NH-1004663 icici  NH-1004728 star
-    run(mss_no='NH-1004728', hosp_id='8900080123380', status='PreAuth - Sent To TPA/ Insurer')
+    run(mss_no='NH-1004956', hosp_id='8900080123380')
