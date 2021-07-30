@@ -22,7 +22,7 @@ status = StringVar()
 Label(mygui, text="Current Status", width=14).grid(row=1, column=4)
 
 status_list = ttk.Combobox(mygui, width=30, textvariable=status)
-status_list['values'] = ('None', "Enhancement Sent To TPA/ Insurer", "In Progress", "Query Sent To TPA/ Insurer",
+status_list['values'] = ('None', "Document Sent", "Enhancement Sent To TPA/ Insurer", "In Progress", "Query Sent To TPA/ Insurer",
                          "PreAuth - Sent To TPA/ Insurer", "Claim - Sent To TPA/ Insurer", "Query Sent To TPA/ Insurer")
 status_list.grid(row=1, column=5)
 status_list.current(0)

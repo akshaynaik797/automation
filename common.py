@@ -24,9 +24,9 @@ from selenium import webdriver
 
 import make_log
 from make_log import log_exceptions, custom_log_data
-from settings import WAIT_PERIOD, attachments_folder
+from settings import WAIT_PERIOD, attachments_folder, getportalfieldvalues_api
 from settings import conn_data, logs_folder, grouping_data_api, \
-    update_hospitaltlog_api, screenshot_folder, root_folder, setportalfieldvalues_api, \
+    update_hospitaltlog_api, screenshot_folder, root_folder,  \
     WEBDRIVER_FOLDER_PATH, chrome_options
 
 wait = int(WAIT_PERIOD)
@@ -63,7 +63,12 @@ class FillPortal:
         if r1.status_code == 200:
             self.data = r1.json()
             pname, insid = self.data['0']['PatientName'], self.data['0']['InsurerID']
-            r2 = requests.post(setportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
+            r2 = requests.post(getportalfieldvalues_api, data={"refno": self.mss_no, "pname": pname, "insid": insid})
+            if r2.status_code == 200:
+                tmp_data = r2.json()
+                if 'pname' in tmp_data:
+                    self.data['0']['PatientName'] = tmp_data['pname']
+
             for i in self.data['0']['Lastdoc']:
                 download_file1(i['Doc'], self.mss_no)
             fields = (
@@ -1006,4 +1011,4 @@ def download_file(url):
 
 if __name__ == '__main__':
     #NH-1004663 icici  NH-1004728 star
-    run(mss_no='NH-1004956', hosp_id='8900080123380')
+    run(mss_no='NH-1005236', hosp_id='8900080123380')

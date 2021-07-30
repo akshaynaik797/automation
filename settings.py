@@ -7,7 +7,7 @@ root_folder = 'automation_data'
 screenshot_folder = 'screenshots'
 attachments_folder = 'attachments'
 logs_folder = 'logs'
-setportalfieldvalues_api = "http://3.7.8.68:9985/setportalfieldvalues"
+getportalfieldvalues_api = "http://3.7.8.68:9985/getportalfieldvalues"
 
 screenshot_url = "http://3.7.8.68:9982/screenshot/"
 grouping_data_api = 'http://3.7.8.68:9980/get_hospitaltlog'
